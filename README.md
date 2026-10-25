@@ -117,8 +117,8 @@ software version and geometry-cache limit are unchanged too.
   fields to the CPU.
 - `find_focus_batch(fields, sweep, ...)` accepts `(batch, y, x)` arrays and
   returns a list of normal result dictionaries. It processes one field at a
-  time, not an entire batch-by-distance tensor. For GPU sweeps, pass an
-  already-device-resident batch to avoid repeated input transfers. Geometry
+  time, not an entire batch-by-distance tensor. Host batches are uploaded one
+  field at a time; already-device-resident batches avoid input uploads. Geometry
   is uploaded once per field; only curves and scalar results return to the
   host. Refinement synchronizes each scalar evaluation; `refine=False`
   avoids those refinement round trips. DHM correction explicitly runs on
@@ -126,9 +126,9 @@ software version and geometry-cache limit are unchanged too.
 
 Local CPU timing (Python 3.12, NumPy 2.5.4, 256² reconstructed synthetic
 field, 101 distances, median of five warmed runs, including FFT setup):
-realness 0.216 s direct versus 0.142 s spectral (**1.53×**);
-AC-realness 0.223 s versus 0.142 s (**1.57×**). Maximum curve differences
-were 1.7 × 10⁻¹⁶ and 1.1 × 10⁻¹⁶ respectively. These are coarse-curve
+realness 0.217 s direct versus 0.163 s spectral (**1.33×**);
+AC-realness 0.221 s versus 0.149 s (**1.49×**). Maximum curve differences
+were 1.7 × 10⁻¹⁶ for both metrics. These are coarse-curve
 measurements, not end-to-end or GPU guarantees; S9's historical 2.8× speedup
 is not universal. The tests compare against direct propagation, including
 odd/rectangular fields, evanescent masks, zero fields, and explicit DHM

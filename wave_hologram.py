@@ -630,6 +630,10 @@ class _PairSpectrum:
             raise ValueError("field0 must be a nonempty finite 2D array")
         if not bool(xp.isfinite(field).all()):
             raise ValueError("field0 must be a nonempty finite 2D array")
+        # These metrics are scale invariant. Normalize before FFT squaring,
+        # whose unnormalized spectral energy can overflow for finite fields.
+        scale = xp.maximum(xp.max(xp.abs(field.real)), xp.max(xp.abs(field.imag)))
+        field = field / xp.where(scale > 0, scale, 1.0)
         # Reuse the host geometry cache; upload once, not once per distance.
         kz, mask = _kz(field.shape, dx, wl)
         spec = xp.fft.fft2(field) * xp.asarray(mask)
@@ -737,7 +741,12 @@ def find_focus_batch(fields, sweep, metric=realness, dx=DX, wl=WL, refine=True,
     once per evaluation; use refine=False for coarse-only GPU sweeps.
     """
     xp = _array_backend(backend, fields)
-    fields = xp.asarray(fields)
+    if xp is not np and hasattr(fields, "__cuda_array_interface__"):
+        fields = xp.asarray(fields)
+    else:
+        # Stream host batches one field at a time instead of allocating the
+        # entire batch on the GPU before iteration.
+        fields = np.asarray(fields)
     if fields.ndim != 3 or 0 in fields.shape:
         raise ValueError("fields must be a nonempty (batch, y, x) array")
     sweep = _focus_sweep_input(sweep)

@@ -39,6 +39,20 @@ class TestPairSpectrum(unittest.TestCase):
                 np.ones((8, 16)) * (1 + 2j), self.sweep, metric)
             np.testing.assert_allclose(curve, value, atol=3e-16)
 
+    def test_extreme_finite_amplitudes_do_not_overflow_or_underflow(self):
+        for metric in ("realness", "ac_realness"):
+            expected = W.pair_spectrum_focus_curve(self.field, self.sweep, metric)
+            for scale in (1e-200, 1e152, 1e200):
+                with self.subTest(metric=metric, scale=scale), np.errstate(all="raise"):
+                    actual = W.pair_spectrum_focus_curve(
+                        self.field * scale, self.sweep, metric)
+                    np.testing.assert_allclose(actual, expected, atol=2e-12)
+        field = np.ones((16, 16)) * 1e152
+        prop = W.Propagator(field)
+        direct = [W.realness(prop(z)) for z in self.sweep]
+        np.testing.assert_allclose(
+            W.pair_spectrum_focus_curve(field, self.sweep), direct, atol=1e-15)
+
     def test_refinement_compatibility_and_custom_metrics(self):
         field = W.angular_spectrum(W.make_object(), 0.00513)
         for name in ("realness", "ac_realness", "amplitude_variance"):
@@ -131,6 +145,17 @@ class TestPairSpectrum(unittest.TestCase):
                 W.find_focus(self.field, self.sweep, backend="cupy")
             W.find_focus(self.field, self.sweep, backend="auto")
 
+    def test_host_batch_is_not_converted_by_gpu_backend_before_iteration(self):
+        fields = np.stack((self.field, self.field))
+        with patch.object(W, "_array_backend") as backend, \
+                patch.object(W, "find_focus", return_value={}) as focus:
+            W.find_focus_batch(fields, self.sweep, backend="cupy")
+        backend.return_value.asarray.assert_not_called()
+        self.assertEqual(focus.call_count, len(fields))
+        for call in focus.call_args_list:
+            self.assertEqual(call.args[0].shape, self.field.shape)
+            self.assertTrue(np.shares_memory(call.args[0], fields))
+
 
 class TestCuPyFocus(unittest.TestCase):
     @classmethod
@@ -163,6 +188,16 @@ class TestCuPyFocus(unittest.TestCase):
                     self.assertAlmostEqual(cpu["z"], gpu["z"], delta=2e-8)
         with self.assertRaisesRegex(ValueError, "only realness/ac_realness"):
             W.find_focus(device[0], sweep, metric="tamura", backend="cupy")
+
+    def test_host_batch_uploads_only_individual_fields(self):
+        cp = self.cp
+        fields = np.ones((3, 8, 8), dtype=complex)
+        with patch.object(cp, "asarray", wraps=cp.asarray) as upload:
+            results = W.find_focus_batch(fields, [-0.001, 0], backend="cupy",
+                                         refine=False)
+        self.assertEqual(len(results), 3)
+        for call in upload.call_args_list:
+            self.assertLessEqual(np.ndim(call.args[0]), 2)
 
 
 if __name__ == "__main__":
