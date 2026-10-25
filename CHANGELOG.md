@@ -1,11 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.1.4 (2026-10-25)
+
+Packaging, CI, examples and a game. **No change to the focus pipeline, the
+metrics or any measured result**; only the version string was bumped.
 
 ### Added
 - `pyproject.toml` for the flat layout (single module `wave_hologram`,
   numpy and matplotlib; extras `dhm` and `notebook`). `pip install -e .`
-  works on Python 3.9 to 3.14. No PyPI release; the version stays 0.1.3.
+  works on Python 3.9 to 3.14. No PyPI release.
 - GitHub Actions workflow `.github/workflows/ci.yml`: unittest on
   Python 3.9 to 3.14, plus a check that the game data matches a regeneration.
 - `examples/quickstart.py` and an executed `examples/waveholo_demo.ipynb`
@@ -20,7 +23,13 @@
 - README sections: Install, Quickstart, Find the focus (game).
 
 ### Unchanged
-- `wave_hologram.py`, the 43 existing tests, all results and limits.
+- `wave_hologram.py` apart from `__version__`, the 43 existing tests, all
+  results and limits.
+
+### Notes
+- The game is served by GitHub Pages (from `main` `/docs`) at
+  https://sparkainlp-x.github.io/waveholo/game/ . It is a synthetic game, not a
+  hardware or biology validation.
 
 ## 0.1.3 (2026-10-25)
 

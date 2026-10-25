@@ -51,7 +51,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 # ------------------------------------------------------------------ config
 N = 256                # grid size (pixels, square) for the synthetic demo
