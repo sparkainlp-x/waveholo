@@ -160,4 +160,11 @@ Details and licence texts are in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Project direction is in
 [WAVEHOLO_DIRECTION.md](WAVEHOLO_DIRECTION.md).
 
+## Cite
+
+Archived on Zenodo. Concept DOI (always the latest version):
+[10.5281/zenodo.23644416](https://doi.org/10.5281/zenodo.23644416). DOI of
+v0.1.4: [10.5281/zenodo.23644417](https://doi.org/10.5281/zenodo.23644417).
+`CITATION.cff` has the same metadata.
+
 License: AGPL-3.0-only (see `LICENSE`).
