@@ -633,7 +633,12 @@ class _PairSpectrum:
         # These metrics are scale invariant. Normalize before FFT squaring,
         # whose unnormalized spectral energy can overflow for finite fields.
         scale = xp.maximum(xp.max(xp.abs(field.real)), xp.max(xp.abs(field.imag)))
-        field = field / xp.where(scale > 0, scale, 1.0)
+        safe_scale = xp.where(scale > 0, scale, 1.0)
+        normalized = xp.empty_like(field)
+        # Real division avoids an overflowing reciprocal for subnormal scales.
+        xp.divide(field.real, safe_scale, out=normalized.real)
+        xp.divide(field.imag, safe_scale, out=normalized.imag)
+        field = normalized
         # Reuse the host geometry cache; upload once, not once per distance.
         kz, mask = _kz(field.shape, dx, wl)
         spec = xp.fft.fft2(field) * xp.asarray(mask)

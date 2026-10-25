@@ -52,6 +52,11 @@ class TestPairSpectrum(unittest.TestCase):
         direct = [W.realness(prop(z)) for z in self.sweep]
         np.testing.assert_allclose(
             W.pair_spectrum_focus_curve(field, self.sweep), direct, atol=1e-15)
+        for scale in (1e-320, 1.7e308):
+            field = np.full((16, 16), complex(scale, scale))
+            with self.subTest(scale=scale), np.errstate(all="raise"):
+                actual = W.pair_spectrum_focus_curve(field, self.sweep)
+            np.testing.assert_allclose(actual, 0, atol=1e-15)
 
     def test_refinement_compatibility_and_custom_metrics(self):
         field = W.angular_spectrum(W.make_object(), 0.00513)
