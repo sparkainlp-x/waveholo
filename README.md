@@ -95,8 +95,8 @@ The full write-up, with all tables and figures, is
 [`docs/game/index.html`](docs/game/index.html) is a small offline game: five
 simulated holograms, a depth slider, and a score against the true synthetic
 distance and against WaveHolo's measured one. Open the file in a browser
-(`file://` works). GitHub Pages is **not enabled yet**, so there is no hosted
-link.
+(`file://` works), or play it on GitHub Pages:
+<https://sparkainlp-x.github.io/waveholo/game/>.
 
 ![Find the focus, level 4 after locking in](docs/game/preview.png)
 
