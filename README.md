@@ -1,10 +1,49 @@
 # wave-hologram
 
+[![CI](https://github.com/sparkainlp-x/waveholo/actions/workflows/ci.yml/badge.svg)](https://github.com/sparkainlp-x/waveholo/actions/workflows/ci.yml)
+
 Real digital holography, end to end: record an off-axis hologram,
 reconstruct the object by numerical back-propagation, and **measure**
 the focus distance instead of assuming it. As of v0.1.3, this is
 validated against logged stage positions on 530 real microscope
 holograms.
+
+## Install
+
+`wave_hologram.py` is a single flat module. It is not published on PyPI. Use it
+from a clone:
+
+```
+git clone https://github.com/sparkainlp-x/waveholo.git
+cd waveholo
+python3 -m venv .venv && . .venv/bin/activate
+pip install -e .                 # numpy + matplotlib
+pip install -e ".[dhm]"          # adds Pillow, for real_data/dhm_v013.py
+pip install -e ".[notebook]"     # adds jupyter, to run examples/waveholo_demo.ipynb
+```
+
+The tests pass on Python 3.9 to 3.14 (checked locally and in CI for 3.9 to
+3.14). Plain `python3 wave_hologram.py` also works without installing.
+
+## Quickstart
+
+```python
+import numpy as np
+import wave_hologram as W
+
+obj = W.make_object()                                    # synthetic ring, cross, dots
+sensor = W.angular_spectrum(obj.astype(complex), 5.0e-3) # 5 mm to the sensor
+holo = W.record_hologram(sensor, car=80.37, ref_phase=1.2)   # unknown piston, fractional carrier
+
+carrier = W.estimate_carrier_2d(holo, dc_radius=30.0 / W.N)  # sub-bin, from the hologram
+field0 = W.reconstruct_field(holo, carrier=carrier)
+res = W.find_focus(field0, np.linspace(-10e-3, 0.0, 101))    # metric="realness"
+print(res["z"] * 1e3, "mm")      # -4.998 (truth -5.000)
+```
+
+This is `examples/quickstart.py` (`python3 examples/quickstart.py` also writes a
+figure). `examples/waveholo_demo.ipynb` is the same walk-through as an executed
+notebook with plots, plus one phase-object scene. Both are synthetic.
 
 ## Run
 
@@ -16,7 +55,7 @@ python3 wave_hologram.py --metric ac_realness  # phase / mixed objects
 python3 wave_hologram.py --no-video
 python3 studies.py                             # S1–S10 research studies (~8 min)
 python3 real_data/dhm_v013.py --data <dir>     # real DHM validation
-python3 -m unittest discover -s tests -v       # 43 tests
+python3 -m unittest discover -s tests -v       # 56 tests (43 v0.1.3 + 13 for the game/examples)
 ```
 
 Requires numpy and matplotlib. ffmpeg is needed for the MP4 and Pillow
@@ -50,6 +89,49 @@ The full write-up, with all tables and figures, is
    **realness** = |Σ U²| / Σ |U|². This metric is invariant to the
    unknown reference phase. Use `ac_realness` for phase objects and
    `local_focus_map` for multi-plane samples.
+
+## Find the focus (game)
+
+[`docs/game/index.html`](docs/game/index.html) is a small offline game: five
+simulated holograms, a depth slider, and a score against the true synthetic
+distance and against WaveHolo's measured one. Open the file in a browser
+(`file://` works). GitHub Pages is **not enabled yet**, so there is no hosted
+link.
+
+![Find the focus, level 4 after locking in](docs/game/preview.png)
+
+- **Banner in the page:** "Synthetic hologram game. Not a hardware or biology
+  validation."
+- **Where the frames come from:** `scripts/make_game_frames.py` runs
+  `record_hologram`, `estimate_carrier_2d`, `reconstruct_field` and
+  `find_focus` on seeded objects with an unknown reference piston and a
+  fractional carrier. It stores 41 frames per level (0.1 mm apart,
+  24 gray levels, amplitude and wrapped phase) plus the true focus and
+  WaveHolo's measured focus. `python3 scripts/make_game_frames.py` rewrites the
+  data inside the page; `--check` compares it with a regeneration.
+- **Offline and private:** one HTML file, no network requests, no trackers,
+  best score kept only in `localStorage`.
+
+Recorded results (this repository, seed-fixed; `error` = |measured − true|):
+
+| Level | Scene | Noise | WaveHolo metric | WaveHolo error | Plain intensity-variance maximum |
+|---|---|---|---|---:|---:|
+| 1 | ring, cross, dots | Gaussian 0.05× | realness | 17.2 µm | 63.0 µm |
+| 2 | random discs | Gaussian 0.2× | realness | 1.3 µm | 113.0 µm |
+| 3 | random diamonds | Poisson, 100 photons | realness | 39.5 µm | 2582.0 µm |
+| 4 | binary phase π/2 object | Gaussian 0.1× | ac_realness | 4.4 µm | 2680.0 µm |
+| 5 | random bars | Gaussian 0.8× | realness | 315.9 µm | 150.0 µm |
+
+On level 4, plain `realness` is 1320 µm off, so that level uses `ac_realness`
+(as the "Default pipeline" below recommends for phase objects). On level 5 the
+plain intensity-variance maximum is closer than WaveHolo. Neither result is
+tuned.
+
+Game limits: five fixed scenes prove nothing about general performance.
+Frames are 0.1 mm apart, so a human pick can be up to 50 µm from the truth,
+while WaveHolo's `find_focus` refines continuously (levels 1, 2 and 4 cannot be
+beaten by any frame pick). The answers are in the page source. It is not a
+hardware, microscope or biology validation.
 
 ## Honest limits
 
