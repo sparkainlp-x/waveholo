@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- `pyproject.toml` for the flat layout (single module `wave_hologram`,
+  numpy and matplotlib; extras `dhm` and `notebook`). `pip install -e .`
+  works on Python 3.9 to 3.14. No PyPI release; the version stays 0.1.3.
+- GitHub Actions workflow `.github/workflows/ci.yml`: unittest on
+  Python 3.9 to 3.14, plus a check that the game data matches a regeneration.
+- `examples/quickstart.py` and an executed `examples/waveholo_demo.ipynb`
+  (synthetic hologram, focus curve, reconstructed intensity and phase, one
+  phase-object scene).
+- "Find the focus" game: `docs/game/index.html` (offline, single file) and
+  `scripts/make_game_frames.py`, which builds its frames and recorded
+  results with `wave_hologram.py`. Preview in `docs/game/preview.png`.
+- `tests/test_game.py`: 13 tests (frame generator determinism and shape, PNG
+  round trip, recorded truths and measured foci match a regeneration, page is
+  self-contained, quickstart). The suite is now 56 tests.
+- README sections: Install, Quickstart, Find the focus (game).
+
+### Unchanged
+- `wave_hologram.py`, the 43 existing tests, all results and limits.
+
 ## 0.1.3 (2026-10-25)
 
 ### Fixed

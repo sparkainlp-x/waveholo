@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wave-hologram"
+version = "0.1.3"
+description = "Off-axis digital holography with a measured focus: record, reconstruct, find the focus distance."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
+authors = [{ name = "Jean-François Brisson" }]
+keywords = ["digital-holography", "angular-spectrum", "off-axis-holography", "autofocus", "synthetic"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = ["numpy", "matplotlib"]
+
+[project.optional-dependencies]
+# Pillow reads the Cuenat et al. DHM TIFFs in real_data/dhm_v013.py.
+dhm = ["Pillow"]
+# Run the example notebook (examples/waveholo_demo.ipynb).
+notebook = ["jupyter", "nbconvert", "ipykernel"]
+
+[project.urls]
+Repository = "https://github.com/sparkainlp-x/waveholo"
+Issues = "https://github.com/sparkainlp-x/waveholo/issues"
+
+[tool.setuptools]
+# Flat layout: the library is the single module wave_hologram.py.
+py-modules = ["wave_hologram"]
