@@ -1,0 +1,21 @@
+{
+  "title": "wave-hologram: off-axis digital holography with measured focus",
+  "description": "Off-axis digital holography: record a hologram, reconstruct the object by numerical back-propagation, and measure the focus distance. Includes synthetic examples, an offline focus game, and validation against logged stage positions on real microscope holograms.",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "Brisson, Jean-François",
+      "orcid": "0009-0000-9778-5374",
+      "affiliation": "Spark AI NLP, Fredericton, New Brunswick, Canada"
+    }
+  ],
+  "access_right": "open",
+  "license": "AGPL-3.0-only",
+  "keywords": [
+    "digital-holography",
+    "angular-spectrum",
+    "off-axis-holography",
+    "autofocus",
+    "synthetic"
+  ]
+}

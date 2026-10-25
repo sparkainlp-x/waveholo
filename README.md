@@ -167,4 +167,12 @@ Archived on Zenodo. Concept DOI (always the latest version):
 v0.1.4: [10.5281/zenodo.23644417](https://doi.org/10.5281/zenodo.23644417).
 `CITATION.cff` has the same metadata.
 
+`.zenodo.json` supplies the creator's ORCID, affiliation, and the
+`AGPL-3.0-only` license for future GitHub release deposits. Keep it in the
+tagged release and check the resulting Zenodo record before publishing.
+It does not update the existing v0.1.4 record: its owner must sign in to
+Zenodo, edit the record's metadata to add the ORCID and affiliation and
+replace `apgl-v3` with `AGPL-3.0-only`, then publish the metadata changes.
+No replacement archive or new software version is needed for that correction.
+
 License: AGPL-3.0-only (see `LICENSE`).
