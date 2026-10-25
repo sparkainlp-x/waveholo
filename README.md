@@ -55,7 +55,7 @@ python3 wave_hologram.py --metric ac_realness  # phase / mixed objects
 python3 wave_hologram.py --no-video
 python3 studies.py                             # S1–S10 research studies (~8 min)
 python3 real_data/dhm_v013.py --data <dir>     # real DHM validation
-python3 -m unittest discover -s tests -v       # 56 tests (43 v0.1.3 + 13 for the game/examples)
+python3 -m unittest discover -s tests -v       # core, game/examples, and acceleration tests
 ```
 
 Requires numpy and matplotlib. ffmpeg is needed for the MP4 and Pillow
@@ -84,11 +84,55 @@ The full write-up, with all tables and figures, is
    ≤ 0.03 bins).
 2. Sideband filter, optionally cropped losslessly (`reconstruct_field`).
 3. For objective-based DHM, remove the lens curvature first
-   (`remove_quadratic_phase`).
+   (`remove_quadratic_phase`, or opt in with `find_focus(..., dhm_mode=True)`).
 4. `find_focus`: coarse sweep, then golden-section refinement of
    **realness** = |Σ U²| / Σ |U|². This metric is invariant to the
    unknown reference phase. Use `ac_realness` for phase objects and
    `local_focus_map` for multi-plane samples.
+
+### Accelerated autofocus
+
+`find_focus` now evaluates `realness` and `ac_realness` using the exact
+pair-spectrum identity from [study S9](RESULTS_v0.1.3.md#9-autofocus-is-frequency-estimation-s9),
+without inverse FFTs for either the coarse sweep or refinement. Other metric
+names and custom callables keep the original propagation path. The signature's
+existing positional arguments and the result dictionary are unchanged; the
+software version and geometry-cache limit are unchanged too.
+
+- `pair_spectrum_focus_curve(field0, sweep, metric="realness")` returns only
+  the coarse NumPy curve; `metric="ac_realness"` removes the DC bin.
+- `chunk_size=8` caps the number of distances evaluated together. The phase
+  block is further capped at 16 MiB, or one full plane for larger fields.
+  Working memory scales with the field and block, not with the entire
+  distance-by-sensor tensor; this is not a 16 MiB limit on total memory.
+- `find_focus(..., dhm_mode=True)` estimates and removes quadratic phase
+  once before searching. It is **off by default**: removing objective
+  curvature shifts/scales the focus coordinate and can remove object phase.
+  It is not an absolute calibration; compare stage motion differentially.
+- `backend="numpy"` is the default. `backend="cupy"` requires a separately
+  installed CuPy compatible with your CUDA environment; no GPU dependency is
+  installed by this project. `backend="auto"` selects CuPy for CUDA-array
+  inputs and NumPy otherwise. Only realness/AC-realness support the GPU;
+  other metrics raise an error on that backend rather than silently copying
+  fields to the CPU.
+- `find_focus_batch(fields, sweep, ...)` accepts `(batch, y, x)` arrays and
+  returns a list of normal result dictionaries. It processes one field at a
+  time, not an entire batch-by-distance tensor. For GPU sweeps, pass an
+  already-device-resident batch to avoid repeated input transfers. Geometry
+  is uploaded once per field; only curves and scalar results return to the
+  host. Refinement synchronizes each scalar evaluation; `refine=False`
+  avoids those refinement round trips. DHM correction explicitly runs on
+  the CPU and adds a field download/upload for device input.
+
+Local CPU timing (Python 3.12, NumPy 2.5.4, 256² reconstructed synthetic
+field, 101 distances, median of five warmed runs, including FFT setup):
+realness 0.216 s direct versus 0.142 s spectral (**1.53×**);
+AC-realness 0.223 s versus 0.142 s (**1.57×**). Maximum curve differences
+were 1.7 × 10⁻¹⁶ and 1.1 × 10⁻¹⁶ respectively. These are coarse-curve
+measurements, not end-to-end or GPU guarantees; S9's historical 2.8× speedup
+is not universal. The tests compare against direct propagation, including
+odd/rectangular fields, evanescent masks, zero fields, and explicit DHM
+correction. CUDA equivalence tests skip when CuPy or a device is unavailable.
 
 ## Find the focus (game)
 

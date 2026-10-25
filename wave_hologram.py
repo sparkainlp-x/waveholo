@@ -594,30 +594,156 @@ def focus_sweep(field0, sweep, metric=realness, dx=DX, wl=WL,
     return (fields if keep_fields else None), vals, int(np.argmin(vals))
 
 
+def _array_backend(backend, field):
+    if backend not in ("numpy", "cupy", "auto"):
+        raise ValueError("backend must be 'numpy', 'cupy', or 'auto'")
+    if backend == "auto":
+        backend = "cupy" if hasattr(field, "__cuda_array_interface__") else "numpy"
+    if backend == "cupy":
+        try:
+            import cupy
+        except ImportError as exc:
+            raise ImportError("backend='cupy' requires a separately installed CuPy") from exc
+        return cupy
+    return np
+
+
+def _focus_sweep_input(sweep):
+    sweep = np.asarray(sweep, dtype=float)
+    if sweep.ndim != 1 or not sweep.size or not np.isfinite(sweep).all():
+        raise ValueError("sweep must be a nonempty 1D array of finite distances")
+    return sweep
+
+
+class _PairSpectrum:
+    """One FFT per field, no inverse FFTs; distance blocks have bounded size."""
+
+    def __init__(self, field, dx, wl, metric, xp, chunk_size):
+        if (not isinstance(chunk_size, (int, np.integer))
+               or isinstance(chunk_size, (bool, np.bool_)) or chunk_size < 1):
+            raise ValueError("chunk_size must be a positive integer")
+        dy, dxx = _pitch(dx)
+        if not all(np.isfinite(v) and v > 0 for v in (dy, dxx, wl)):
+            raise ValueError("pixel pitches and wavelength must be finite and positive")
+        field = xp.asarray(field, dtype=xp.complex128)
+        if field.ndim != 2 or not field.size or 0 in field.shape:
+            raise ValueError("field0 must be a nonempty finite 2D array")
+        if not bool(xp.isfinite(field).all()):
+            raise ValueError("field0 must be a nonempty finite 2D array")
+        # Reuse the host geometry cache; upload once, not once per distance.
+        kz, mask = _kz(field.shape, dx, wl)
+        spec = xp.fft.fft2(field) * xp.asarray(mask)
+        if metric is ac_realness:
+            spec[0, 0] = 0
+        self.energy = xp.sum(xp.abs(spec) ** 2)
+        pair = spec * xp.roll(xp.flip(spec, (0, 1)), 1, (0, 1))
+        keep = xp.abs(pair.ravel()) > 0
+        self.pair = pair.ravel()[keep]
+        self.k = xp.asarray(kz).ravel()[keep]
+        # At most 16 MiB per phase block, or one plane for large sensors.
+        self.chunk_size = min(chunk_size, max(1, (16 * 1024 ** 2)
+                                            // max(16 * self.k.size, 1)))
+        self.xp = xp
+
+    def curve(self, sweep):
+        xp = self.xp
+        out = xp.empty(len(sweep), dtype=xp.float64)
+        for start in range(0, len(sweep), self.chunk_size):
+            stop = min(start + self.chunk_size, len(sweep))
+            distances = xp.asarray(sweep[start:stop])
+            phase = xp.exp((2j * distances[:, None]) * self.k[None, :])
+            phase *= self.pair[None, :]
+            numerator = xp.abs(xp.sum(phase, axis=1))
+            safe_energy = xp.where(self.energy > 0, self.energy, 1.0)
+            out[start:stop] = xp.where(
+               self.energy > 0, 0.5 * (1 - numerator / safe_energy), 0.5)
+        return out if xp is np else xp.asnumpy(out)
+
+
+def pair_spectrum_focus_curve(field0, sweep, metric="realness", dx=DX, wl=WL,
+                             *, backend="numpy", chunk_size=8):
+    """Exact realness/AC-realness curve without per-distance inverse FFTs.
+
+    Uses F(k)F(-k) as in studies.py, S9. AC-realness removes the DC bin.
+    ``chunk_size`` caps the number of simultaneous planes, further limited
+    to a 16 MiB phase block (or one plane). Returns a NumPy curve, even on
+    CuPy; inputs and geometry are uploaded only once per call.
+    """
+    sweep = _focus_sweep_input(sweep)
+    fn = _metric(metric)
+    if fn is not realness and fn is not ac_realness:
+        raise ValueError("pair spectrum supports only realness/ac_realness")
+    xp = _array_backend(backend, field0)
+    return _PairSpectrum(field0, dx, wl, fn, xp, chunk_size).curve(sweep)
+
+
 def find_focus(field0, sweep, metric=realness, dx=DX, wl=WL, refine=True,
-               tol=1e-8):
+               tol=1e-8, *, dhm_mode=False, backend="numpy", chunk_size=8):
     """Coarse sweep + golden-section refinement of the focus distance.
 
     Returns a dict: z (refined, m), coarse_z, value, contrast
     (median / min of the coarse curve), curve (coarse metric values).
     The refinement brackets the coarse argmin by its two neighbours, so
     it can never jump to another basin.
+
+    Realness and AC-realness use the pair spectrum; other metrics retain
+    the NumPy propagator path. CuPy is optional and supports only these
+    two spectral metrics. ``backend='auto'`` selects CuPy for CUDA inputs.
+    DHM mode fits/removes quadratic phase ONCE on the CPU (a host round
+    trip for GPU input). Corrected distances are shifted/scaled, NOT an
+    absolute calibration. Defaults leave the field unchanged.
     """
-    sweep = np.asarray(sweep, dtype=float)
+    sweep = _focus_sweep_input(sweep)
+    if not np.isfinite(tol) or tol <= 0:
+        raise ValueError("tol must be finite and positive")
     fn = _metric(metric)
-    prop = Propagator(field0, dx, wl)
-    curve = np.array([fn(prop(d)) for d in sweep])
+    xp = _array_backend(backend, field0)
+    spectral = fn is realness or fn is ac_realness
+    if xp is not np and not spectral:
+        raise ValueError("CuPy focus supports only realness/ac_realness")
+    if dhm_mode:
+        host = xp.asnumpy(field0) if xp is not np else np.asarray(field0)
+        if host.ndim != 2 or not host.size or not np.isfinite(host).all():
+            raise ValueError("field0 must be a nonempty finite 2D array")
+        field0, _ = remove_quadratic_phase(host)
+    if spectral:
+        solver = _PairSpectrum(field0, dx, wl, fn, xp, chunk_size)
+        curve = solver.curve(sweep)
+        evaluate = lambda d: float(solver.curve([d])[0])
+    else:
+        prop = Propagator(field0, dx, wl)
+        evaluate = lambda d: fn(prop(d))
+        curve = np.array([evaluate(d) for d in sweep])
     i = int(np.argmin(curve))
     z, val = float(sweep[i]), float(curve[i])
     if refine and len(sweep) >= 3:
         a = sweep[max(i - 1, 0)]
         b = sweep[min(i + 1, len(sweep) - 1)]
-        z, val = golden_min(lambda d: fn(prop(d)), min(a, b), max(a, b), tol)
+        z, val = golden_min(evaluate, min(a, b), max(a, b), tol)
         if val > curve[i]:
             z, val = float(sweep[i]), float(curve[i])
     med = float(np.median(curve))
     return {"z": z, "coarse_z": float(sweep[i]), "value": val,
             "contrast": med / val if val > 0 else np.inf, "curve": curve}
+
+
+def find_focus_batch(fields, sweep, metric=realness, dx=DX, wl=WL, refine=True,
+                     tol=1e-8, *, dhm_mode=False, backend="numpy", chunk_size=8):
+    """Focus a (batch, y, x) array, returning one find_focus dict per field.
+
+    Processes one field at a time to bound working memory independently of
+    batch size. CUDA arrays stay on device until curves/results are returned;
+    DHM correction is the explicit CPU exception. Refinement synchronizes
+    once per evaluation; use refine=False for coarse-only GPU sweeps.
+    """
+    xp = _array_backend(backend, fields)
+    fields = xp.asarray(fields)
+    if fields.ndim != 3 or 0 in fields.shape:
+        raise ValueError("fields must be a nonempty (batch, y, x) array")
+    sweep = _focus_sweep_input(sweep)
+    return [find_focus(field, sweep, metric, dx, wl, refine, tol,
+                       dhm_mode=dhm_mode, backend=backend, chunk_size=chunk_size)
+            for field in fields]
 
 
 def local_focus_map(field0, sweep, tile=32, metric="realness", dx=DX, wl=WL,

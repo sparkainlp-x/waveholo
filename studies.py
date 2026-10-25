@@ -374,17 +374,7 @@ def s8_two_plane():
 # ---------------------------------------------------------------- S9
 def pair_spectrum_curve(field0, sweep, dx=W.DX, wl=W.WL):
     """realness(z) from the pair spectrum P(k)=F(k)F(-k): no FFT per z."""
-    F = np.fft.fft2(field0)
-    Fm = np.roll(np.flip(F, (0, 1)), 1, (0, 1))
-    kz, mask = W._kz(F.shape, dx, wl)
-    P = (F * Fm * mask).ravel()
-    E = float(np.sum(np.abs(F * mask) ** 2))
-    keep = np.abs(P) > 0
-    P, k = P[keep], kz.ravel()[keep]
-    out = np.empty(len(sweep))
-    for i, z in enumerate(sweep):
-        out[i] = 0.5 * (1 - abs(np.dot(np.exp(2j * z * k), P)) / E)
-    return out
+    return W.pair_spectrum_focus_curve(field0, sweep, dx=dx, wl=wl)
 
 
 def s9_identity():
