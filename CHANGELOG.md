@@ -27,6 +27,8 @@ metrics or any measured result**; only the version string was bumped.
   results and limits.
 
 ### Notes
+- Zenodo archive of v0.1.4: https://doi.org/10.5281/zenodo.23644417 (concept DOI
+  10.5281/zenodo.23644416), added to README and CITATION.cff after the release.
 - The game is served by GitHub Pages (from `main` `/docs`) at
   https://sparkainlp-x.github.io/waveholo/game/ . It is a synthetic game, not a
   hardware or biology validation.

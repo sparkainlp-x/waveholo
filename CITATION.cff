@@ -5,6 +5,7 @@ authors:
   - family-names: Brisson
     given-names: Jean-François
 version: 0.1.4
+doi: 10.5281/zenodo.23644416
 license: AGPL-3.0-only
 keywords:
   - digital-holography
