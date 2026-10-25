@@ -1,0 +1,9 @@
+Class-mean linearity and per-hologram precision in SAMPLE space (um of stage)
+amplitude_variance   class-mean slope -85.2 um/um, class-mean resid RMS 55 um (= 0.65 um stage), single-hologram SD 124 um (= 1.46 um stage); 1-um step / single SD = 0.7
+   residuals per class (um stage): -0.53 +0.42 +0.74 +0.40 -1.12 +0.31
+realness             class-mean slope -96.4 um/um, class-mean resid RMS 18 um (= 0.19 um stage), single-hologram SD 148 um (= 1.53 um stage); 1-um step / single SD = 0.7
+   residuals per class (um stage): +0.05 -0.11 +0.30 +0.06 -0.32 +0.09
+ac_realness          class-mean slope -108.4 um/um, class-mean resid RMS 29 um (= 0.26 um stage), single-hologram SD 199 um (= 1.83 um stage); 1-um step / single SD = 0.5
+   residuals per class (um stage): -0.13 +0.05 +0.44 +0.00 -0.25 -0.38
+within-class correlation of amp-var and realness deviations: 0.669
+within-class corr(realness deviation, carrier ky deviation): -0.081; amp-var: -0.025

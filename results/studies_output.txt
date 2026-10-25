@@ -1,0 +1,124 @@
+wave-hologram 0.1.3 studies (numpy 2.4.6)
+
+== S1. REFERENCE PISTON ==
+Truth -5.00 mm, clean. The reference phase is a free constant in
+any real setup; v0.1.2 always simulated it as 0.
+ ref phase imag@truth real@truth imag focus real focus
+     0.000     0.0140     0.0099     -4.994     -4.981
+     0.393     0.1237     0.0101     -5.194     -4.980
+     0.785     0.4831     0.0106     -5.394     -4.993
+     1.178     0.8418     0.0099     -5.594     -5.014
+     1.571     0.9910     0.0088     -5.794     -5.023
+     1.963     0.8717     0.0090     -4.394     -5.013
+     2.356     0.5475     0.0102     -4.594     -4.993
+     2.749     0.1784     0.0102     -4.794     -4.977
+     3.142     0.0093     0.0092     -5.000     -4.960
+imag_energy at truth spans 0.0093..0.9910 (sin^2 of the piston); realness spans 0.008776..0.010551.
+worst imag focus error 0.794 mm; worst realness error 0.040 mm
+  figure: /workspace/wave-hologram-v0.1.3/results/s1_piston.png
+
+== S2. THE 'COMB' IS THE lambda/2 PISTON OSCILLATION, ALIASED ==
+imag_energy minima spacing on a 25 nm grid: 0.2750 um (lambda/2 = 0.2660 um)
+sampling at 1 um aliases a 0.266 um period to 1/|1/0.266 - 4|: apparent period 4.16 um (v0.1.2 reported teeth every 4 um); residual -64.0 nm
+realness over the same 20 um: 0.01087..0.01092 (variation 0.45%) - smooth
+  figure: /workspace/wave-hologram-v0.1.3/results/s2_no_comb.png
+
+== S3. SUB-BIN CARRIER ==
+true car int est subbin est     err imag int imag sub real int real sub  (focus err, mm)
+   80.00      80    80.0200  0.0200    0.000    0.006    0.027    0.019
+   80.10      80    80.1150  0.0150    0.194    0.006    0.028    0.018
+   80.20      80    80.2050  0.0050    0.306    0.006    0.019    0.008
+   80.30      80    80.2975  0.0025    0.494    0.000    0.001    0.007
+   80.40      80    80.3925  0.0075    0.606    0.006    0.026    0.015
+   80.50      80    80.4925  0.0075    0.794    0.006    0.043    0.018
+   80.60      81    80.5975  0.0025    0.606    0.006    0.015    0.019
+   80.70      81    80.7050  0.0050    0.494    0.006    0.007    0.011
+   80.80      81    80.8150  0.0150    0.306    0.006    0.003    0.002
+   80.90      81    80.9225  0.0225    0.194    0.006    0.012    0.012
+   81.00      81    81.0300  0.0300    0.006    0.094    0.021    0.014
+max sub-bin carrier error 0.0300 bins; worst focus error: imag+int 0.794, imag+sub 0.094, real+int 0.043, real+sub 0.019 mm
+20 random 2-D carriers (|ky|<50, kx 55..100): median error 0.0034 bins, max 0.0114
+
+== S4. RESIDUAL BIAS = SIDEBAND CROSS-TALK ==
+Controls (truth -5.00 mm): true sensor field and an ideal
+low-passed sideband give exactly 0; the hologram adds twin and
+|U|^2 terms whose broadband tails leak into the sideband window.
+  true sensor field: err 0.000 um
+                sharp object: c80/w56   -6.9 c80/w48   +1.4 c80/w40  +16.4 c80/w32  +63.5 c80/w24  +48.6 c100/w27  -50.1  (signed err, um)
+    band-limited (r<40 bins): c80/w56   +7.9 c80/w48   +7.9 c80/w40   +8.2 c80/w32   +7.8 c80/w24   +0.4 c100/w27  +24.7  (signed err, um)
+    band-limited (r<24 bins): c80/w56   -1.6 c80/w48   -1.6 c80/w40   -0.8 c80/w32   -1.3 c80/w24   -0.9 c100/w27   -0.6  (signed err, um)
+  figure: /workspace/wave-hologram-v0.1.3/results/s4_bias_vs_window.png
+
+== S5. OFF-GRID FOCUS: COARSE 0.1 mm SWEEP + GOLDEN SECTION ==
+   truth  noise   coarse   refined  err um imag 0.1mm imag err evals
+  -3.300      -    -3.30   -3.3486    48.6      -3.90    0.600   125
+  -3.300   0.20    -3.30   -3.3388    38.8      -3.60    0.300   125
+  -5.030      -    -5.00   -5.0145    15.5      -4.70    0.330   125
+  -5.030   0.20    -5.10   -5.0563    26.3      -4.40    0.630   125
+  -6.137      -    -6.10   -6.0984    38.6      -5.70    0.437   125
+  -6.137   0.20    -6.10   -6.1390     2.0      -6.10    0.037   125
+  -7.770      -    -7.80   -7.7641     5.9      -7.50    0.270   125
+  -7.770   0.20    -7.70   -7.7415    28.5      -7.70    0.070   125
+  -9.100      -    -9.10   -9.0840    16.0      -8.50    0.600   125
+  -9.100   0.20    -9.10   -9.0725    27.5      -8.50    0.600   125
+
+== S6. NOISE WITH A RANDOM REFERENCE PISTON ==
+Each trial draws a new piston and a new noise field; carrier is
+estimated. Entry: median |error| mm / trials within 0.1 mm.
+           noise    imag_energy       realness    ac_realness
+    gaussian 0.1    0.344/ 2/12    0.015/12/12    0.017/12/12
+    gaussian 0.2    0.306/ 2/12    0.015/12/12    0.012/12/12
+   gaussian 0.35    0.300/ 2/12    0.015/12/12    0.014/12/12
+    gaussian 0.5    0.300/ 2/12    0.035/11/12    0.039/11/12
+    gaussian 0.8    0.300/ 1/12    0.071/ 9/12    0.069/ 9/12
+      gaussian 1    0.306/ 1/12    0.101/ 6/12    0.098/ 6/12
+    gaussian 1.5    0.450/ 0/12    0.264/ 5/12    0.275/ 4/12
+      gaussian 2    0.656/ 1/12    1.324/ 2/12    1.332/ 2/12
+   poisson 10000    0.344/ 2/12    0.016/12/12    0.018/12/12
+    poisson 1000    0.344/ 2/12    0.022/12/12    0.021/12/12
+     poisson 300    0.356/ 2/12    0.014/12/12    0.012/12/12
+     poisson 100    0.394/ 2/12    0.014/12/12    0.015/12/12
+      poisson 30    0.347/ 1/12    0.044/ 9/12    0.042/ 9/12
+  figure: /workspace/wave-hologram-v0.1.3/results/s6_noise_random_piston.png
+
+== S7. PHASE AND MIXED OBJECTS (truth -5.00, piston 0.7) ==
+Entry: |error| mm / contrast (median/min). ok = error < 0.1 mm.
+                  object   imag_energy      realness   ac_realness amplitude_var        tamura phase_varianc
+      amplitude, dark bg   0.306/31.4   0.011/ 7.1   0.010/ 7.0   5.000/ 1.3   5.000/ 1.1   0.018/ 3.7
+    amplitude, bright bg   0.394/95.5   0.005/ 7.5   0.004/ 6.2   5.000/ 1.2   5.000/ 1.0   0.004/ 7.8
+       binary phase pi/8   3.694/66.8   5.000/ 1.2   0.003/ 3.2   0.042/ 3.7   0.041/ 1.4   5.000/ 1.2
+       binary phase pi/2   3.694/10.3   4.494/ 1.4   0.007/ 3.5   0.133/ 2.6   0.115/ 1.3   5.000/ 1.4
+      binary phase 3pi/4   2.006/15.7   0.758/ 1.3   0.000/ 3.4   0.252/ 1.7   0.100/ 1.2   5.000/ 1.3
+         binary phase pi   0.394/49.3   0.010/ 3.9   0.013/ 3.3   0.715/ 1.7   0.442/ 1.1   5.000/ 1.1
+         phase disk pi/2   3.606/ 1.1   5.000/ 1.0   0.023/ 4.2   0.037/ 2.7   0.038/ 1.3   5.000/ 1.0
+    1 material amp+phase   3.694/52.3   3.426/ 1.4   0.000/ 3.7   2.064/ 1.2   2.249/ 1.1   3.586/ 1.5
+           3-level phase   3.694/ 6.2   4.861/ 1.3   0.078/ 2.3   0.113/ 2.6   0.097/ 1.3   5.000/ 1.3
+  2 materials, own supp.   0.306/ 4.8   1.553/ 1.0   0.604/ 1.0   5.000/ 1.2   5.000/ 1.0   0.908/ 1.0
+    smooth phase 0.5 rad   2.994/77.9   5.000/ 1.0   4.794/ 2.0   0.382/ 1.4   0.371/ 1.1   5.000/ 1.0
+      smooth phase 2 rad   1.906/ 6.7   5.000/ 1.0   5.000/ 1.2   0.264/ 2.0   0.263/ 1.2   5.000/ 1.0
+objects found within 0.1 mm: imag_energy 0/12, realness 3/12, ac_realness 9/12, amplitude_variance 2/12, tamura 3/12, phase_variance 2/12
+
+== S8. TWO-PLANE SAMPLE: PER-TILE FOCUS MAP ==
+global realness focus: -5.091 mm (one number for two planes)
+tiles with signal: 20; |error| median 0.000 mm, within 0.25 mm: 19/20, assigned to the right plane (nearer truth): 20/20
+  figure: /workspace/wave-hologram-v0.1.3/results/s8_two_plane_depth_map.png
+
+== S9. SPECTRAL IDENTITY ==
+sum U_z^2 = sum_k F(k) F(-k) exp(2 i z kz(k)), and sum |U_z|^2 is
+constant (Parseval). So realness(z) depends ONLY on the pair
+spectrum P(k) = F(k)F(-k); paraxially kz ~ k - pi*lambda*|f|^2, so
+the focus curve is |1-D Fourier transform of P over |f|^2| at
+'frequency' lambda*z: autofocus is frequency estimation.
+max |direct - pair-spectrum| over 101 planes: 2.22e-16  (direct 0.80 s, pair-spectrum 0.29 s)
+
+== S10. REAL FLY HOLOGRAM (pyDHM fly-20x.bmp, 532 nm, 2.4 um) ==
+carrier (ky, kx) = (-264.470, +290.407) bins; cropped field (402, 402), pitch 12.23 um
+           imag_energy: focus -7.873 mm, contrast 2.648
+              realness: focus -2.245 mm, contrast 1.013
+           ac_realness: focus +1.057 mm, contrast 1.108
+    amplitude_variance: focus +1.165 mm, contrast 1.195
+                tamura: focus +1.341 mm, contrast 1.045
+  figure: /workspace/wave-hologram-v0.1.3/results/s10_fly_metrics.png
+  figure: /workspace/wave-hologram-v0.1.3/results/s10_fly_refocus.png
+
+total 460 s

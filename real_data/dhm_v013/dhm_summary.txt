@@ -1,0 +1,18 @@
+DHM validation (v0.1.3): 530 holograms, classes [0, 1, 10, 11, 12, 13]
+carrier ky +281.198 +- 0.185, kx -268.137 +- 0.133 bins
+
+              metric  slope mm/um    +-SE |slope|    R^2 resid RMS within-class SD contrast
+  amplitude_variance      -0.0852  0.0012    85.2  0.900     0.148          0.1244    1.097
+              tamura      +0.1465  0.0252   146.5  0.060     3.017          3.0593    1.017
+            realness      -0.0964  0.0013    96.4  0.909     0.159          0.1480    1.417
+         ac_realness      -0.1084  0.0017   108.4  0.886     0.203          0.1986    1.565
+
+|slope| in um of hologram-plane focus per um of stage Z; M^2 = 100 for a nominal 10x objective.
+
+per-class mean focus (mm) / SD:
+  class   0 Z  -50.000 um n=100: amplitude_variance -8.371/0.196  tamura -19.659/0.151  realness -4.862/0.215  ac_realness -5.344/0.236
+  class   1 Z  -49.000 um n=100: amplitude_variance -8.376/0.099  tamura -19.728/0.104  realness -4.974/0.117  ac_realness -5.433/0.131
+  class  10 Z  -40.065 um n=100: amplitude_variance -9.110/0.117  tamura -19.245/2.766  realness -5.796/0.113  ac_realness -6.360/0.164
+  class  11 Z  -39.079 um n=100: amplitude_variance -9.223/0.088  tamura -18.827/3.352  realness -5.915/0.139  ac_realness -6.514/0.183
+  class  12 Z  -38.095 um n=100: amplitude_variance -9.436/0.158  tamura -17.412/4.505  realness -6.046/0.185  ac_realness -6.648/0.263
+  class  13 Z  -37.112 um n= 30: amplitude_variance -9.398/0.132  tamura -16.528/4.995  realness -6.102/0.156  ac_realness -6.769/0.214
