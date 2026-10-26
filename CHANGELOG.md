@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.1.5 (2026-10-26)
+
+Release preparation; no GitHub release or new Zenodo archive is published
+by these repository changes.
+
+### Added
+- `pair_spectrum_focus_curve`: exact realness and AC-realness curves from
+  the S9 pair-spectrum identity, evaluated in bounded distance blocks.
+- Optional CuPy backend and `find_focus_batch`, processing one field at a
+  time; NumPy remains the default and GPU dependencies are not required.
+- Explicit `find_focus(..., dhm_mode=True)` quadratic-phase correction,
+  disabled by default. Corrected coordinates are shifted/scaled, not an
+  absolute focus calibration.
+- Acceleration regression tests for direct-propagation equivalence,
+  bounded blocks, custom metrics, DHM, batches, invalid input, and extreme
+  finite amplitudes. CUDA tests skip without CuPy or a usable device.
+- `.zenodo.json` with creator ORCID, affiliation, and AGPL-3.0-only license;
+  matching creator details in `CITATION.cff`.
+
+### Changed
+- `find_focus` uses the pair spectrum for realness/AC-realness, including
+  refinement, preserving existing positional arguments and result keys.
+  Other metrics and custom callables retain direct propagation.
+- `studies.py` delegates its S9 curve to the library implementation.
+- Local coarse-curve CPU speedups measured 1.33× for realness and 1.49× for
+  AC-realness, with maximum differences of 1.7 × 10⁻¹⁶; these are not
+  universal speed guarantees. Benchmark details are in the README.
+
+### Unchanged
+- Geometry-cache capacity, existing game data, and historical DHM evidence.
+- The v0.1.4 Zenodo archive and its DOI. Correcting that record's metadata
+  requires the owner's Zenodo login; no v0.1.5 DOI is claimed here.
+
 ## 0.1.4 (2026-10-25)
 
 Packaging, CI, examples and a game. **No change to the focus pipeline, the

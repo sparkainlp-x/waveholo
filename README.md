@@ -1,5 +1,9 @@
 # wave-hologram
 
+Current code version: **0.1.5** (release preparation; see
+[CHANGELOG.md](CHANGELOG.md)). The existing v0.1.4 Zenodo archive is not
+replaced by this update.
+
 [![CI](https://github.com/sparkainlp-x/waveholo/actions/workflows/ci.yml/badge.svg)](https://github.com/sparkainlp-x/waveholo/actions/workflows/ci.yml)
 
 Real digital holography, end to end: record an off-axis hologram,
@@ -96,8 +100,8 @@ The full write-up, with all tables and figures, is
 pair-spectrum identity from [study S9](RESULTS_v0.1.3.md#9-autofocus-is-frequency-estimation-s9),
 without inverse FFTs for either the coarse sweep or refinement. Other metric
 names and custom callables keep the original propagation path. The signature's
-existing positional arguments and the result dictionary are unchanged; the
-software version and geometry-cache limit are unchanged too.
+existing positional arguments and the result dictionary are unchanged;
+the geometry-cache limit is unchanged too.
 
 - `pair_spectrum_focus_curve(field0, sweep, metric="realness")` returns only
   the coarse NumPy curve; `metric="ac_realness"` removes the DC bin.

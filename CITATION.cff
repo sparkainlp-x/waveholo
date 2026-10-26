@@ -6,7 +6,7 @@ authors:
     given-names: Jean-François
     orcid: "https://orcid.org/0009-0000-9778-5374"
     affiliation: "Spark AI NLP, Fredericton, New Brunswick, Canada"
-version: 0.1.4
+version: 0.1.5
 doi: 10.5281/zenodo.23644416
 license: AGPL-3.0-only
 keywords:
@@ -15,4 +15,4 @@ keywords:
   - off-axis-holography
   - autofocus
   - synthetic
-date-released: "2026-10-25"
+date-released: "2026-10-26"
