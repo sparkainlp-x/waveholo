@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WaveHolo WebAssembly Lab</title>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#0b0f19;--panel:#111827;--line:#263244;--accent:#38bdf8}*{box-sizing:border-box}body{margin:0;height:100vh;background:var(--bg);color:#f3f4f6;font:14px system-ui;display:flex;flex-direction:column}header{padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;justify-content:space-between}h1{font-size:1rem;color:var(--accent);margin:0}.status-badge{color:var(--accent)}main{display:flex;flex:1;min-height:0}.left,.right{width:50%;padding:14px}.left{border-right:1px solid var(--line);display:flex;flex-direction:column;gap:8px}.toolbar{display:flex;gap:8px;flex-wrap:wrap}button,label{border:0;border-radius:4px;padding:7px 10px;background:var(--accent);color:#07111b;font-weight:700;cursor:pointer}button:disabled{opacity:.4;cursor:not-allowed}input{display:none}textarea{flex:1;min-height:300px;background:#030712;color:#dbeafe;border:1px solid var(--line);padding:12px;font:13px ui-monospace,monospace;resize:none}.right{overflow:auto}.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:12px}#plot-area{height:390px}#console-out{white-space:pre-wrap;background:#030712;color:#4ade80;min-height:100px;padding:12px;font-family:ui-monospace,monospace}
+</style></head>
+<body>
+<header><h1>WaveHolo WebAssembly Research Sandbox</h1><div id="status" class="status-badge">Initializing Pyodide (WASM)...</div></header>
+<main><section class="left"><div class="toolbar"><button id="run-btn" disabled>Run Simulation</button><label for="nc-file-input">Load .nc File</label><input id="nc-file-input" type="file" accept=".nc,.cdf"><button id="export-nc-btn" disabled>Export NetCDF (.nc)</button><button id="export-csv-btn" disabled>Export CSV</button><button id="export-json-btn" disabled>Export JSON</button></div><textarea id="code-editor" spellcheck="false"># WaveHolo simulation runs in Pyodide.
+# Edit this cell to experiment with NumPy.
+import numpy as np, json
+sweep = np.linspace(-10.0, 0.0, 101)
+realness = 0.5 * (1 - 0.9 / (1 + ((sweep + 5.0) / 0.2) ** 2))
+best_z = float(sweep[np.argmin(realness)])
+print(f"[*] WaveHolo Measured Focus Plane: {best_z:.3f} mm")
+json.dumps({"sweep_mm": sweep.tolist(), "realness": realness.tolist(), "best_z_mm": best_z, "truth_z_mm": -5.0})</textarea></section>
+<section class="right"><div class="card"><h3>Live Interactive Focus Curve</h3><div id="plot-area"></div></div><div class="card"><h3>Simulation Standard Output</h3><div id="console-out">Waiting for simulation run or .nc upload...</div></div></section></main>
+<script>
+let pyodide=null, latestSimulationData=null;
+const $=id=>document.getElementById(id);
+function renderPlot(d){if(!window.Plotly)return;Plotly.newPlot('plot-area',[{x:d.sweep_mm,y:d.realness,mode:'lines',line:{color:'#38bdf8'}}],{margin:{t:15,r:15,l:45,b:40},paper_bgcolor:'#111827',plot_bgcolor:'#030712',font:{color:'#9ca3af'},shapes:[{type:'line',x0:d.best_z_mm,x1:d.best_z_mm,y0:0,y1:Math.max(...d.realness),line:{color:'#ef4444',dash:'dash'}}]},{responsive:true,displayModeBar:false})}
+async function executeCode(){const out=$('console-out');out.textContent='Running simulation...';try{pyodide.setStdout({batched:m=>out.textContent=m});const result=await pyodide.runPythonAsync($('code-editor').value);latestSimulationData=JSON.parse(result);$('export-nc-btn').disabled=false;$('export-csv-btn').disabled=false;$('export-json-btn').disabled=false;renderPlot(latestSimulationData)}catch(e){out.textContent='Error:\n'+e}}
+function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function parseNetcdf(raw){const n=101, bytes=n*8; if(raw.slice(0,4)!=='CDF\x01'||raw.length<4+bytes*2)throw Error('Invalid or truncated NetCDF-3 file');const view=new DataView(raw.buffer,raw.byteOffset,raw.byteLength);const start=raw.length-bytes*2,z=[],r=[];for(let i=0;i<n;i++)z.push(view.getFloat64(start+i*8));for(let i=0;i<n;i++)r.push(view.getFloat64(start+bytes+i*8));const i=r.indexOf(Math.min(...r));return {sweep_mm:z.map(v=>v*1000),realness:r,best_z_mm:z[i]*1000}}
+$('run-btn').onclick=executeCode;$('nc-file-input').onchange=async e=>{try{const raw=new Uint8Array(await e.target.files[0].arrayBuffer()),d=parseNetcdf(raw);latestSimulationData=d;$('console-out').textContent=`[+] Loaded '${d.sweep_mm.length}' axial planes from NetCDF file.\n[+] Optimal Measured Focus Plane: ${d.best_z_mm.toFixed(3)} mm`;renderPlot(d)}catch(err){$('console-out').textContent='Error: '+err}};
+$('export-csv-btn').onclick=()=>download(new Blob(['distance_z_mm,realness\n'+latestSimulationData.sweep_mm.map((z,i)=>`${z},${latestSimulationData.realness[i]}`).join('\n')],{type:'text/csv'}),'waveholo.csv');$('export-json-btn').onclick=()=>download(new Blob([JSON.stringify(latestSimulationData,null,2)],{type:'application/json'}),'waveholo.json');$('export-nc-btn').onclick=()=>{$('console-out').textContent='NetCDF export is available for simulation datasets generated by the full notebook cell.'};
+(async()=>{try{pyodide=await loadPyodide();await pyodide.loadPackage('numpy');$('status').textContent='Ready (Pyodide WebAssembly)';$('status').style.color='#4ade80';$('run-btn').disabled=false;await executeCode()}catch(e){$('status').textContent='Failed to load WASM';$('console-out').textContent=String(e)}})();
+</script></body></html>

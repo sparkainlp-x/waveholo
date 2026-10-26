@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """wave-hologram: off-axis digital holography with a measured focus.
 
-Pipeline (v0.1.3)
+Pipeline (v0.1.5)
 -----------------
 1. An object at z = 0 (amplitude, phase, or mixed).
 2. Angular-spectrum propagation to a sensor plane; an off-axis hologram
@@ -51,7 +51,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 # ------------------------------------------------------------------ config
 N = 256                # grid size (pixels, square) for the synthetic demo
@@ -73,7 +73,7 @@ OUTDIR_DEFAULT = os.path.join(HERE, "output")
 # per GEOMETRY (shape, pitch, wavelength) in a small LRU; the transfer
 # function for a distance is then a single complex exponential.
 _KZ_CACHE = OrderedDict()
-_KZ_CACHE_MAX = 6
+_KZ_CACHE_MAX = 8
 
 
 def _pitch(dx):
@@ -397,6 +397,34 @@ def remove_quadratic_phase(field, iters=3):
     return g, total
 
 
+# ------------------------------------------------------ accelerated metrics
+def pair_spectrum_realness(field0, sweep, dx=DX, wl=WL):
+    """Evaluate phase-invariant realness over *sweep* without propagating fields.
+
+    Parseval's theorem reduces ``sum(U_z**2)`` to a paired Fourier-spectrum
+    sum.  The denominator is invariant, so a complete sweep only needs one
+    forward FFT and a vectorized phase kernel.  This is mathematically
+    equivalent to :func:`realness` of angular-spectrum propagated fields.
+    """
+    field0 = np.asarray(field0, dtype=complex)
+    if field0.ndim != 2 or not np.isfinite(field0).all():
+        raise ValueError("field0 must be a finite 2D array")
+    sweep = np.asarray(sweep, dtype=float)
+    if sweep.ndim != 1 or not np.isfinite(sweep).all():
+        raise ValueError("sweep must be a one-dimensional finite array")
+    ny, nx = field0.shape
+    kz, mask = _kz(field0.shape, dx, wl)
+    spectrum = np.fft.fft2(field0) * mask
+    # Mapping F(-k) on an FFT-indexed grid is flip + one-cell roll.
+    paired = spectrum * np.roll(np.flip(spectrum), (1, 1), axis=(0, 1))
+    denom = float(np.sum(np.abs(spectrum) ** 2)) / (ny * nx)
+    if denom <= 0 or not np.isfinite(denom):
+        return np.full(sweep.shape, 0.5, dtype=float)
+    phase = np.exp(2j * np.multiply.outer(sweep, kz.ravel()).reshape(-1, ny, nx))
+    numerator = np.sum(paired[None, :, :] * phase, axis=(1, 2)) / (ny * nx)
+    return 0.5 * (1.0 - np.abs(numerator) / denom)
+
+
 # ------------------------------------------------------------------ metrics
 def imag_energy(field):
     """Fraction of energy in the imaginary part (v0.1.2 metric).
@@ -604,9 +632,17 @@ def find_focus(field0, sweep, metric=realness, dx=DX, wl=WL, refine=True,
     it can never jump to another basin.
     """
     sweep = np.asarray(sweep, dtype=float)
-    fn = _metric(metric)
+    # The pair-spectrum identity is the fast path for the default metric.
+    # Other metrics retain the general propagator implementation.
+    if metric == "realness" or metric is realness:
+        curve = pair_spectrum_realness(field0, sweep, dx=dx, wl=wl)
+        fn = realness
+    else:
+        fn = _metric(metric)
+        curve = None
     prop = Propagator(field0, dx, wl)
-    curve = np.array([fn(prop(d)) for d in sweep])
+    if curve is None:
+        curve = np.array([fn(prop(d)) for d in sweep])
     i = int(np.argmin(curve))
     z, val = float(sweep[i]), float(curve[i])
     if refine and len(sweep) >= 3:

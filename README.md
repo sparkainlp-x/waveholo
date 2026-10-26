@@ -8,6 +8,11 @@ the focus distance instead of assuming it. As of v0.1.3, this is
 validated against logged stage positions on 530 real microscope
 holograms.
 
+The v0.1.5 development line adds a vectorized pair-spectrum solver for
+realness sweeps, a browser-only Pyodide/NetCDF research sandbox at
+[`docs/sandbox/`](docs/sandbox/), and a real-data benchmark harness at
+[`real_data/live_dhm_benchmark.py`](real_data/live_dhm_benchmark.py).
+
 ## Install
 
 `wave_hologram.py` is a single flat module. It is not published on PyPI. Use it
@@ -55,11 +60,17 @@ python3 wave_hologram.py --metric ac_realness  # phase / mixed objects
 python3 wave_hologram.py --no-video
 python3 studies.py                             # S1–S10 research studies (~8 min)
 python3 real_data/dhm_v013.py --data <dir>     # real DHM validation
-python3 -m unittest discover -s tests -v       # 56 tests (43 v0.1.3 + 13 for the game/examples)
+python3 -m unittest discover -s tests -v       # core, game, NetCDF, and browser tests
 ```
 
 Requires numpy and matplotlib. ffmpeg is needed for the MP4 and Pillow
 for the DHM TIFFs.
+
+For the complete development environment, install `pip install -e ".[test]"`.
+The browser test requires Playwright's Chromium runtime (`playwright install
+chromium`). CI provisions it in the Playwright container. The sandbox loads
+Pyodide and Plotly from their public CDNs and performs all numerical work in
+the browser; uploaded NetCDF-3 focus curves are decoded locally.
 
 ## What v0.1.3 measures
 
