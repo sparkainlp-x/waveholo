@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- `CITATION.cff` now cites v0.1.5 with its Zenodo version DOI
+  10.5281/zenodo.23653721 (concept DOI 10.5281/zenodo.23644416); it still said 0.1.4.
+- `publish.yml` has a `guard` job: PyPI publishing needs the repository variable
+  `PYPI_PUBLISH` set to `true` and a `vX.Y.Z` tag equal to the `pyproject.toml`
+  version. Off by default. See the README.
+- `scripts/check_release_tag.py` and `tests/test_release_metadata.py`: the guard's
+  check, and a test that `pyproject.toml`, `__version__` and `CITATION.cff` agree.
+- `CITATION.cff` author entry gains the ORCID (0009-0000-9778-5374), as in membrane-arena-3x3.
+
 ## 0.1.4 (2026-10-25)
 
 Packaging, CI, examples and a game. **No change to the focus pipeline, the
