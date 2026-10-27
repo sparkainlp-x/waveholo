@@ -2,7 +2,7 @@
 
 ## WHAT IT IS
 
-Off-axis digital holography with measured focus. Angular-spectrum
+Off-axis digital holography with focus estimation. Angular-spectrum
 propagation, sideband reconstruction, and focus metrics — every claim
 measured, every failure documented. Classical computation only. No
 hardware, no speedup, no product claim.

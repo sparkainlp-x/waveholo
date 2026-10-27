@@ -14,6 +14,9 @@ Fixes after an independent review. No change to the focus pipeline's results.
   now labelled as an illustrative placeholder, and the browser test follows.
 
 ### Changed (wording and metadata)
+- Title and description now say "focus estimation" instead of "measured focus" in
+  `CITATION.cff`, `.zenodo.json`, `pyproject.toml`, module headers and docs, to
+  match the README.
 - README: "estimate" instead of "measure"; the real-data result is described as
   a slope check on 6 of 100 stage positions, with the class-mean 95% interval;
   "100 photons per pixel" now says peak (about 17 mean); the synthetic bias
