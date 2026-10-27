@@ -21,12 +21,23 @@ Fixes after an independent review. No change to the focus pipeline's results.
   selection and baseline caveats; WaveHolo / `wave-hologram` naming note.
 - RESULTS_v0.1.3.md: an addendum (originals unchanged). REVIEW.md and
   WAVEHOLO_DIRECTION.md: historical notes.
-- CITATION.cff: title "WaveHolo (wave-hologram): ...", ORCID. The Zenodo record
-  title keeps its wording until it is edited or a new version is archived.
+- `CITATION.cff` title is "WaveHolo (wave-hologram): ..."; the title of the existing
+  Zenodo records keeps its older wording until a record is edited or a new
+  version is archived.
+- `CITATION.cff` now cites v0.1.5 with its Zenodo version DOI
+  10.5281/zenodo.23653721 (concept DOI 10.5281/zenodo.23644416); it still said 0.1.4.
+  The author entry gains the ORCID (0009-0000-9778-5374).
 - THIRD_PARTY_NOTICES.md: the arXiv title is "Tiny Transformer Networks".
 - `docs/index.html` so https://sparkainlp-x.github.io/waveholo/ no longer returns
   404; the game page footer states the scene-selection caveat.
 - `tests/test_review_fixes.py`.
+
+### Added
+- `publish.yml` has a `guard` job: PyPI publishing needs the repository variable
+  `PYPI_PUBLISH` set to `true` and a `vX.Y.Z` tag equal to the `pyproject.toml`
+  version. Off by default. See the README.
+- `scripts/check_release_tag.py` and `tests/test_release_metadata.py`: the guard's
+  check, and a test that `pyproject.toml`, `__version__` and `CITATION.cff` agree.
 
 ## 0.1.4 (2026-10-25)
 
