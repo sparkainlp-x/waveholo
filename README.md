@@ -1,12 +1,17 @@
-# wave-hologram
+# WaveHolo (`wave-hologram`)
 
 [![CI](https://github.com/sparkainlp-x/waveholo/actions/workflows/ci.yml/badge.svg)](https://github.com/sparkainlp-x/waveholo/actions/workflows/ci.yml)
 
 Real digital holography, end to end: record an off-axis hologram,
-reconstruct the object by numerical back-propagation, and **measure**
-the focus distance instead of assuming it. As of v0.1.3, this is
-validated against logged stage positions on 530 real microscope
-holograms.
+reconstruct the object by numerical back-propagation, and **estimate**
+the focus distance from the complex wavefield instead of assuming it.
+The estimate carries a documented error (see "Honest limits"). As of
+v0.1.3 it has been **checked** against logged stage positions on 530
+real microscope holograms taken at 6 of 100 stage positions. That is a
+slope check, not an absolute-focus test.
+
+The name is WaveHolo; the Python module, package and Zenodo record are
+called `wave-hologram` / `wave_hologram`.
 
 The v0.1.5 development line adds a vectorized pair-spectrum solver for
 realness sweeps, a browser-only Pyodide/NetCDF research sandbox at
@@ -15,8 +20,10 @@ realness sweeps, a browser-only Pyodide/NetCDF research sandbox at
 
 ## Install
 
-`wave_hologram.py` is a single flat module. It is not published on PyPI. Use it
-from a clone:
+`wave_hologram.py` is a single flat module. **No release has been published
+on PyPI**: do not expect `pip install wave-hologram` to give you this project.
+(`.github/workflows/publish.yml` exists but has never been run for a
+release.) Use it from a clone:
 
 ```
 git clone https://github.com/sparkainlp-x/waveholo.git
@@ -70,24 +77,61 @@ For the complete development environment, install `pip install -e ".[test]"`.
 The browser test requires Playwright's Chromium runtime (`playwright install
 chromium`). CI provisions it in the Playwright container. The sandbox loads
 Pyodide and Plotly from their public CDNs and performs all numerical work in
-the browser; uploaded NetCDF-3 focus curves are decoded locally.
+the browser; uploaded NetCDF-3 focus curves are decoded locally. The
+sandbox's default cell plots a hand-written analytic curve (minimum at
+−5.0 mm by construction). It is a plotting demo, not output of
+`wave_hologram.py`, and it says nothing about accuracy.
 
 ## What v0.1.3 measures
 
 - **Real microscope (Cuenat et al. DHM, 10×, 530 holograms, 6 stage
-  positions):** focus tracks the stage with slope −96.4 ± 1.3 µm/µm,
-  which is about M² = 100. Class means lie 0.19 µm (in stage units)
-  from the line.
+  positions):** focus tracks the stage with slope −96.4 ± 1.3 µm/µm
+  (standard error of a per-hologram fit that treats the 530 holograms as
+  independent; they sit at only 6 distinct stage positions). A fit to the
+  6 class means gives −96.3 µm/µm with a 95% interval of about ±5 (t,
+  4 degrees of freedom). That is consistent with M² ≈ 100 for a nominal
+  10× objective, but the other two metrics give −85 and −108, and the
+  objective's calibrated magnification is not available. Class means lie
+  0.19 µm (in stage units) from the line. The focus curves are shallow
+  (median/min contrast about 1.4×).
 - **Synthetic demo** (fractional carrier 80.37, reference piston
   1.2 rad, both unknown to the pipeline): truth −5.000 mm, measured
-  −4.998 mm (2 µm error), recovery correlation 0.956.
-- **Noise** (random piston in every trial): realness is 12/12 within
-  0.1 mm up to 0.35× gaussian noise and down to 100 photons per pixel.
-  The v0.1.2 metric manages 0–2/12 at every level.
+  −4.998 mm (2 µm error), recovery correlation 0.956. This is one clean
+  scene; sharp objects carry a bias of −50 to +64 µm (see "Honest limits").
+- **Noise** (synthetic ring/cross/dots scene, random piston in every
+  trial, 12 trials per level, realness metric): 12/12 within 0.1 mm up to
+  0.35× gaussian noise and down to 100 *peak* photons per pixel (about 17
+  on average for this hologram); 9/12 at 30 peak photons. 12/12 is a count,
+  not a guarantee (Wilson 95% lower bound for 12/12 is 76%). The v0.1.2
+  metric (the project's own earlier one, not prior art) manages 0–2/12 at
+  every level.
 
 The full write-up, with all tables and figures, is
 **[RESULTS_v0.1.3.md](RESULTS_v0.1.3.md)**. Changes are listed in
 [CHANGELOG.md](CHANGELOG.md).
+
+## Related work
+
+Focus criteria for numerical refocusing in digital holography are an
+established field, and WaveHolo's metrics sit inside it. They were not
+benchmarked against the following here:
+
+- Dubois et al., Opt. Express 14, 5895 (2006): integrated amplitude, with a
+  minimum for amplitude objects and a maximum for phase objects; and
+  Dubois et al., Opt. Lett. 39, 4286 (2014): a high-pass filtered variant
+  that gives a minimum for both. `ac_realness` (mean-subtracted field) is
+  conceptually close to the second.
+- Langehanenberg et al., Appl. Opt. 47, D176 (2008): Fourier-weighted and
+  gradient-based criteria for pure phase objects.
+- Memmolo et al., Opt. Lett. 36, 1945 (2011) and 39, 4719 (2014): Tamura and
+  sparsity criteria. Zhang et al., Opt. Lett. 42, 3824 (2017): sparsity of the
+  gradient, which removes the polarity problem. Tamamitsu et al. (2020):
+  Gini index versus Tamura coefficient.
+
+`realness` is also a criterion that is minimised over distance, not a direct
+measurement of position. Whether it is new has not been verified. It has
+been compared only with the project's own earlier metric, a plain Tamura
+coefficient and intensity variance.
 
 ## Default pipeline
 
@@ -139,6 +183,11 @@ plain intensity-variance maximum is closer than WaveHolo. Neither result is
 tuned.
 
 Game limits: five fixed scenes prove nothing about general performance.
+The scenes were chosen after a short exploratory pass over about eleven
+candidates, so the table is a recorded demonstration, not an unbiased
+benchmark. The "plain intensity-variance maximum" baseline has the wrong
+polarity for phase objects by design (Dubois et al. 2006), so level 4 is a
+weak comparison.
 Frames are 0.1 mm apart, so a human pick can be up to 50 µm from the truth,
 while WaveHolo's `find_focus` refines continuously (levels 1, 2 and 4 cannot be
 beaten by any frame pick). The answers are in the page source. It is not a
@@ -149,7 +198,7 @@ hardware, microscope or biology validation.
 - The DHM test covers 6 of 100 stage positions (Z −50…−37 µm) and
   checks the slope, not absolute focus. Metric slopes differ (85 / 96
   / 108) because curvature removal rescales coordinates.
-- The residual synthetic bias (up to ±50 µm for sharp objects, ≤ 1.6 µm
+- The residual synthetic bias (−50 to +64 µm for sharp objects, ≤ 1.6 µm
   for band-limited ones) is sideband cross-talk, set by the recording
   geometry.
 - No metric wins on every object. Smooth phase objects and two

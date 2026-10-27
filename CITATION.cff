@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "wave-hologram: off-axis digital holography with measured focus"
+title: "WaveHolo (wave-hologram): off-axis digital holography with measured focus"
 authors:
   - family-names: Brisson
     given-names: Jean-François
