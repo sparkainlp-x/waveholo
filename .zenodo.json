@@ -1,5 +1,5 @@
 {
-  "title": "wave-hologram: off-axis digital holography with measured focus",
+  "title": "WaveHolo (wave-hologram): off-axis digital holography with measured focus",
   "upload_type": "software",
   "description": "<p>WaveHolo is an open-source Python package for end-to-end digital holography. It records an off-axis hologram, reconstructs the object field by numerical back-propagation (angular-spectrum method), and estimates the focus distance from the recording instead of assuming it.</p><p>At v0.1.3 the estimated focus tracked the logged stage position on 530 real microscope holograms at 6 stage positions (a slope check, not an absolute-distance validation; see RESULTS_v0.1.3.md). Other results are from simulated holograms. The v0.1.5 line adds a vectorized pair-spectrum solver for realness sweeps, a browser-only Pyodide/NetCDF research sandbox, and a real-data benchmark harness.</p><p>The package is a single flat module (not on PyPI). License: AGPL-3.0-only.</p><p>Code: <a href=\"https://github.com/sparkainlp-x/waveholo\">https://github.com/sparkainlp-x/waveholo</a></p>",
   "creators": [
