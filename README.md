@@ -175,7 +175,32 @@ Details and licence texts are in
 
 Archived on Zenodo. Concept DOI (always the latest version):
 [10.5281/zenodo.23644416](https://doi.org/10.5281/zenodo.23644416). DOI of
+v0.1.5: [10.5281/zenodo.23653721](https://doi.org/10.5281/zenodo.23653721);
 v0.1.4: [10.5281/zenodo.23644417](https://doi.org/10.5281/zenodo.23644417).
-`CITATION.cff` has the same metadata.
+`CITATION.cff` cites v0.1.5 (its date is the Zenodo publication date, UTC).
 
 License: AGPL-3.0-only (see `LICENSE`).
+
+## Publishing to PyPI (maintainers)
+
+The package is **not** on PyPI, and `.github/workflows/publish.yml` will not
+publish it unless you opt in. A `guard` job must pass before the
+`pypi-publish` job can run:
+
+1. The repository variable `PYPI_PUBLISH` must be exactly `true`
+   (Settings, Secrets and variables, Actions, Variables). It is unset by default.
+2. The run must be on a tag `vX.Y.Z` whose version equals `version` in
+   `pyproject.toml` (checked by `scripts/check_release_tag.py`). A mismatch
+   fails the run when the variable is set.
+
+The tests in `test-gate` still run on every version tag.
+
+To enable publishing:
+
+1. On PyPI, add a trusted publisher for project `wave-hologram`: owner
+   `sparkainlp-x`, repository `waveholo`, workflow `publish.yml`, environment `pypi`.
+2. In the repository settings, add **required reviewers** to the `pypi`
+   environment, so a person approves each upload.
+3. Set the `PYPI_PUBLISH` variable to `true`, then push a matching tag.
+
+Set the variable back to anything else (or delete it) to turn publishing off again.
