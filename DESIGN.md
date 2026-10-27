@@ -6,7 +6,7 @@
 ## What this is
 
 A self-contained digital holography pipeline: record a hologram, reconstruct
-the object by numerical back-propagation, and measure the focus distance
+the object by numerical back-propagation, and estimate the focus distance
 instead of assuming it. Built from a Perplexity thread's focus-sweep export
 snippet, corrected where the snippet's setup was under-determined.
 

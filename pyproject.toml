@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "wave-hologram"
 version = "0.1.5"
-description = "Off-axis digital holography with measured focus: record, reconstruct, find the focus distance."
+description = "Off-axis digital holography with focus estimation: record, reconstruct, estimate the focus distance."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "AGPL-3.0-only"

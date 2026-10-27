@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""wave-hologram: off-axis digital holography with a measured focus.
+"""wave-hologram: off-axis digital holography with focus estimation.
 
 Pipeline (v0.1.5)
 -----------------

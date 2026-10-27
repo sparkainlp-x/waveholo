@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# wave-hologram: off-axis digital holography with a measured focus.
+# wave-hologram: off-axis digital holography with focus estimation.
 # Copyright (C) 2026 Jean-François Brisson
 # SPDX-License-Identifier: AGPL-3.0-only
 """Quickstart: record a synthetic off-axis hologram, then measure its focus.

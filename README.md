@@ -149,7 +149,7 @@ coefficient and intensity variance.
 
 [`docs/game/index.html`](docs/game/index.html) is a small offline game: five
 simulated holograms, a depth slider, and a score against the true synthetic
-distance and against WaveHolo's measured one. Open the file in a browser
+distance and against WaveHolo's estimated one. Open the file in a browser
 (`file://` works), or play it on GitHub Pages:
 <https://sparkainlp-x.github.io/waveholo/game/>.
 
@@ -162,7 +162,7 @@ distance and against WaveHolo's measured one. Open the file in a browser
   `find_focus` on seeded objects with an unknown reference piston and a
   fractional carrier. It stores 41 frames per level (0.1 mm apart,
   24 gray levels, amplitude and wrapped phase) plus the true focus and
-  WaveHolo's measured focus. `python3 scripts/make_game_frames.py` rewrites the
+  WaveHolo's estimated focus. `python3 scripts/make_game_frames.py` rewrites the
   data inside the page; `--check` compares it with a regeneration.
 - **Offline and private:** one HTML file, no network requests, no trackers,
   best score kept only in `localStorage`.
