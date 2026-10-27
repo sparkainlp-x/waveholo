@@ -1,5 +1,7 @@
 # REVIEW.md — wave-hologram v0.1.0 + sensor test
 
+> **Historical (v0.1.0).** Several statements below are superseded, for example "no artifact moves the focus plane" and the 11-test count. See RESULTS_v0.1.3.md and the "Honest limits" section of README.md for the current state. Kept unchanged otherwise.
+
 Review date: 2026-10-24. All numbers below were measured by running the
 code in this folder, not assumed. Truth throughout: object 5.00 mm from
 the sensor, focus expected at -5.00 mm back-propagation.

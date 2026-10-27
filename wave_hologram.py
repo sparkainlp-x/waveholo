@@ -520,6 +520,9 @@ def remove_quadratic_phase(field, iters=3):
 
 
 # ------------------------------------------------------ accelerated metrics
+_PAIR_CHUNK_ELEMENTS = 4_000_000   # complex samples per chunk (about 64 MB)
+
+
 def pair_spectrum_realness(field0, sweep, dx=DX, wl=WL):
     """Evaluate phase-invariant realness over *sweep* without propagating fields.
 
@@ -542,8 +545,19 @@ def pair_spectrum_realness(field0, sweep, dx=DX, wl=WL):
     denom = float(np.sum(np.abs(spectrum) ** 2)) / (ny * nx)
     if denom <= 0 or not np.isfinite(denom):
         return np.full(sweep.shape, 0.5, dtype=float)
-    phase = np.exp(2j * np.multiply.outer(sweep, kz.ravel()).reshape(-1, ny, nx))
-    numerator = np.sum(paired[None, :, :] * phase, axis=(1, 2)) / (ny * nx)
+    # The phase kernel is built in chunks of at most _PAIR_CHUNK_ELEMENTS
+    # complex samples, so memory stays bounded for large fields (one kernel
+    # for the whole sweep would need len(sweep) * ny * nx complex numbers,
+    # several GB for a 2048^2 hologram).
+    chunk = max(1, _PAIR_CHUNK_ELEMENTS // (ny * nx))
+    kzf = kz.ravel()
+    pairedf = paired.ravel()
+    numerator = np.empty(sweep.shape, dtype=complex)
+    for start in range(0, sweep.size, chunk):
+        part = sweep[start:start + chunk]
+        phase = np.exp(2j * np.multiply.outer(part, kzf))
+        numerator[start:start + chunk] = phase @ pairedf
+    numerator /= ny * nx
     return 0.5 * (1.0 - np.abs(numerator) / denom)
 
 
