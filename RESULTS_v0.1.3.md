@@ -5,12 +5,18 @@ arbitrary constant, the phase of the reference beam. v0.1.3 replaces it
 with a metric that ignores that constant, estimates the carrier to a
 fraction of a bin, refines focus off the grid, and runs the whole
 pipeline on **530 real microscope holograms** with logged stage
-positions. All numbers below come from `studies.py`
+positions (at only 6 distinct stage positions, see section 1). All numbers below come from `studies.py`
 (`results/studies_output.txt`) and `real_data/dhm_v013.py`
-(`real_data/dhm_v013/`) on this machine. The test suite has 43 tests,
-all passing.
+(`real_data/dhm_v013/`) on this machine. The test suite had 43 tests
+at v0.1.3, all passing (it has grown since).
 
-## 1. Headline: it works on a real microscope
+## 1. Real-microscope slope check (6 distinct stage positions)
+
+This is a slope check on hardware data, not a test of absolute focus
+distance. The 530 holograms sit at only 6 distinct stage positions, so the
+effective sample size for the slope is about 6, not 530. The honest
+uncertainty is the interval from the 6 class means (table below and the
+README), not the naive standard error of a per-hologram fit.
 
 The Cuenat et al. dataset (Zenodo 6337535, CC-BY-4.0, arXiv:2203.07772)
 contains holograms from a Lyncée Tec DHM with a 10× objective,
@@ -23,21 +29,31 @@ pipeline. The objective's phase curvature was removed with the new
 `remove_quadratic_phase`, and focus was found blind on a −20…+4 mm
 sweep.
 
-| metric | slope (µm focus / µm stage) | R² | class-mean residual (µm stage) | single-hologram SD (µm stage) |
-|---|---:|---:|---:|---:|
-| **realness** (curvature removed) | **−96.4 ± 1.3** | 0.909 | **0.19** | 1.53 |
-| ac_realness (curvature removed) | −108.4 ± 1.7 | 0.886 | 0.26 | 1.83 |
-| amplitude_variance (raw) | −85.2 ± 1.2 | 0.900 | 0.65 | 1.46 |
-| tamura (raw) | fails, sticks to sweep edge | 0.06 | — | — |
+| metric | slope, per-hologram fit (µm focus / µm stage), naive SE | slope, fit to the 6 class means, 95% interval (t, 4 df) | R² (per-hologram) | class-mean residual (µm stage) | single-hologram SD (µm stage) |
+|---|---:|---:|---:|---:|---:|
+| realness (curvature removed) | −96.4 ± 1.3 | −96.3 ± 4.8 | 0.909 | 0.19 | 1.53 |
+| ac_realness (curvature removed) | −108.4 ± 1.7 | −109.3 ± 7.4 | 0.886 | 0.26 | 1.83 |
+| amplitude_variance (raw) | −85.2 ± 1.2 | −84.7 ± 14.6 | 0.900 | 0.65 | 1.46 |
+| tamura (raw) | fails, sticks to sweep edge | — | 0.06 | — | — |
+
+The "± " in the per-hologram column is the standard error of a fit that
+treats the 530 holograms as independent. They are not: they cluster at 6
+stage positions, so that column understates the uncertainty. The class-mean
+column is recomputed from `real_data/dhm_v013/dhm_per_hologram.csv` (OLS on
+the 6 per-position means, t interval with 4 degrees of freedom).
 
 What this means:
 
-- **The slope matches the optics.** A 10× objective magnifies depth by
-  M² ≈ 100. Realness gives 96.4 ± 1.3. This is a measured-vs-truth
-  test on hardware data, not a simulation.
-- **Realness is the most linear metric.** Averaged per stage position,
-  it sits 0.19 µm from a straight line, which is 3.4× tighter than
-  amplitude variance (0.65 µm). The stage steps here are about 1 µm.
+- **The slope is consistent with the nominal optics.** A nominal 10×
+  objective magnifies depth by M² ≈ 100. Realness gives −96.3 ± 4.8
+  (95%, 6 class means), an interval that includes 100, but the other two
+  metrics give −85 and −109, and the objective's calibrated magnification
+  is not available here. This is a check against logged stage positions on
+  hardware data, not a simulation, and it tests the slope only.
+- **Realness is the most linear metric of the four here.** Averaged per
+  stage position, it sits 0.19 µm from a straight line, which is 3.4×
+  tighter than amplitude variance (0.65 µm). The stage steps here are about
+  1 µm. This is a description of 6 points, not a significance test.
 - **Single holograms scatter about 1.5 µm, and most of that is
   probably real motion.** Realness and amplitude variance work on
   different fields (curvature-removed vs raw) and use different
@@ -54,6 +70,17 @@ What this means:
   sits at 0.43–0.45 on every plane, because no field carrying about
   78 rad of lens curvature is ever real. After removal it drops to
   0.11 at focus, with 1.4× contrast.
+
+What this does not show:
+
+- **Absolute focus distance.** Only the slope against stage position was
+  checked.
+- **Generalisation.** Only the first 2.2 GB of the 48.6 GB archive was used
+  (6 stage positions spanning about 13 µm). No stage position was held out.
+- **An unbiased choice of metric.** Four metrics were compared on this data
+  and realness was reported as the best. Curvature removal was added after
+  raw realness failed on it. A confirmatory test needs the metric and
+  preprocessing fixed in advance and run on positions not used here.
 
 Figures: `real_data/dhm_v013/dhm_focus_vs_stage.png` (all 530
 holograms, four metrics) and `dhm_mean_curves.png` (class-mean focus
@@ -222,7 +249,7 @@ the fly has no logged truth. Figures: `results/s10_fly_refocus.png`,
 ## Reproduce
 
 ```
-python3 -m unittest discover -s tests          # 43 tests
+python3 -m unittest discover -s tests          # 43 tests at v0.1.3
 python3 studies.py                             # S1–S10, ~8 min, writes results/
 python3 real_data/dhm_v013.py --data <dir with class_* folders> --per-class 100
 ```
