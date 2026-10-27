@@ -19,7 +19,7 @@ Exact bit-for-bit equality of the raw floating-point arrays is NOT claimed
 across platforms. See docs/validation.md and requirements-ci.txt.
 
 If the pipeline is changed on purpose, regenerate the literals with the
-snippet in docs/validation_followup.md and say why in the change.
+snippet in docs/validation.md (Reproducibility) and say why in the change.
 """
 
 import hashlib
