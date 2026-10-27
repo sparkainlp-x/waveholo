@@ -12,13 +12,16 @@
 <header><h1>WaveHolo WebAssembly Research Sandbox</h1><div id="status" class="status-badge">Initializing Pyodide (WASM)...</div></header>
 <main><section class="left"><div class="toolbar"><button id="run-btn" disabled>Run Simulation</button><label for="nc-file-input">Load .nc File</label><input id="nc-file-input" type="file" accept=".nc,.cdf"><button id="export-nc-btn" disabled>Export NetCDF (.nc)</button><button id="export-csv-btn" disabled>Export CSV</button><button id="export-json-btn" disabled>Export JSON</button></div><textarea id="code-editor" spellcheck="false"># WaveHolo simulation runs in Pyodide.
 # Edit this cell to experiment with NumPy.
+# NOTE: the default "realness" below is an analytic Lorentzian written by hand,
+# with its minimum at -5.0 mm by construction. It is a plotting demo, not output
+# of wave_hologram.py, and says nothing about WaveHolo accuracy.
 import numpy as np, json
 sweep = np.linspace(-10.0, 0.0, 101)
 realness = 0.5 * (1 - 0.9 / (1 + ((sweep + 5.0) / 0.2) ** 2))
 best_z = float(sweep[np.argmin(realness)])
-print(f"[*] WaveHolo Measured Focus Plane: {best_z:.3f} mm")
+print(f"[*] Illustrative curve minimum (analytic placeholder, NOT a wave_hologram.py measurement): {best_z:.3f} mm")
 json.dumps({"sweep_mm": sweep.tolist(), "realness": realness.tolist(), "best_z_mm": best_z, "truth_z_mm": -5.0})</textarea></section>
-<section class="right"><div class="card"><h3>Live Interactive Focus Curve</h3><div id="plot-area"></div></div><div class="card"><h3>Simulation Standard Output</h3><div id="console-out">Waiting for simulation run or .nc upload...</div></div></section></main>
+<section class="right"><div class="card"><h3>Illustrative focus curve (analytic placeholder, not WaveHolo output)</h3><div id="plot-area"></div></div><div class="card"><h3>Simulation Standard Output</h3><div id="console-out">Waiting for simulation run or .nc upload...</div></div></section></main>
 <script>
 let pyodide=null, latestSimulationData=null;
 const $=id=>document.getElementById(id);

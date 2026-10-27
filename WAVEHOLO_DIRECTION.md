@@ -71,8 +71,9 @@ things. Never merge the claims.
 
 ## NEXT, IN ORDER
 
-Done: v0.1.3 pushed to github.com/sparkainlp-x/waveholo (branch main),
-no tag yet.
+Done: v0.1.3 pushed to github.com/sparkainlp-x/waveholo (branch main).
+(Update: v0.1.3 was never tagged. v0.1.4 was tagged and released, and its Zenodo
+record is 10.5281/zenodo.23644417. The three steps below are historical.)
 
 1. Switch waveholo ON in Zenodo GitHub settings BEFORE tagging —
    otherwise no DOI mints.
