@@ -13,10 +13,6 @@ Fixes after an independent review. No change to the focus pipeline's results.
   hand-written analytic curve whose minimum is at -5.0 mm by construction. It is
   now labelled as an illustrative placeholder, and the browser test follows.
 
-- CI was red on `main`: the coverage gate (`fail_under = 85`) exceeded the
-  measured coverage of `wave_hologram.py` (about 60%; all tests passed). The gate
-  is now 55 as a floor, with a comment.
-
 ### Changed (wording and metadata)
 - README: "estimate" instead of "measure"; the real-data result is described as
   a slope check on 6 of 100 stage positions, with the class-mean 95% interval;

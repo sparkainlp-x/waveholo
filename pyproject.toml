@@ -45,7 +45,4 @@ omit = ["tests/*", "scripts/*", "docs/*"]
 
 [tool.coverage.report]
 show_missing = true
-# Measured coverage of wave_hologram.py is about 60% (the CLI, video and plotting
-# code are not unit-tested). The gate was 85, which made CI red on main; it is a
-# floor to ratchet up, not a quality claim.
-fail_under = 55
+fail_under = 85
