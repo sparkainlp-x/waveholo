@@ -47,6 +47,7 @@ import argparse
 import os
 import subprocess
 import sys
+import warnings
 from collections import OrderedDict
 
 import numpy as np
@@ -76,19 +77,108 @@ _KZ_CACHE = OrderedDict()
 _KZ_CACHE_MAX = 8
 
 
+# ------------------------------------------------------- input validation
+# Physical parameters and arrays are checked at the public entry points so
+# that a nonsensical value (zero or negative pitch, NaN, a string, the wrong
+# shape) raises a ValueError or TypeError that names the argument, instead of
+# a ZeroDivisionError, a numpy message, or a silently wrong result.
+def _real_scalar(value, name):
+    """float(value) for a finite real scalar; TypeError / ValueError otherwise."""
+    arr = np.asarray(value)
+    if arr.dtype.kind not in "iuf":
+        raise TypeError(f"{name} must be a real number, got {type(value).__name__}")
+    if arr.ndim != 0:
+        raise ValueError(f"{name} must be a scalar, got an array of shape {arr.shape}")
+    x = float(arr)
+    if not np.isfinite(x):
+        raise ValueError(f"{name} must be finite, got {x}")
+    return x
+
+
+def _positive(value, name):
+    """A finite real scalar that is strictly positive."""
+    x = _real_scalar(value, name)
+    if x <= 0:
+        raise ValueError(f"{name} must be positive, got {x}")
+    return x
+
+
+def _pair(value, name):
+    """A (a, b) pair of finite real numbers, returned as floats."""
+    if np.ndim(value) != 1 or len(value) != 2:
+        raise ValueError(f"{name} must be a pair of two numbers")
+    return _real_scalar(value[0], f"{name}[0]"), _real_scalar(value[1], f"{name}[1]")
+
+
+def _field2d(field, name="field"):
+    """Complex 2-D array that is non-empty and finite."""
+    a = np.asarray(field, dtype=complex)
+    if a.ndim != 2:
+        raise ValueError(f"{name} must be a 2D array, got {a.ndim}D")
+    if a.size == 0:
+        raise ValueError(f"{name} must not be empty")
+    if not np.isfinite(a).all():
+        raise ValueError(f"{name} must be finite (no NaN or inf)")
+    return a
+
+
+def _image2d(image, name="hologram"):
+    """Real 2-D array that is non-empty and finite (a recorded intensity)."""
+    a = np.asarray(image)
+    if np.iscomplexobj(a):
+        if np.any(a.imag != 0):
+            raise TypeError(f"{name} must be real-valued (an intensity)")
+        a = a.real
+    a = np.asarray(a, dtype=float)
+    if a.ndim != 2:
+        raise ValueError(f"{name} must be a 2D array, got {a.ndim}D")
+    if a.size == 0:
+        raise ValueError(f"{name} must not be empty")
+    if not np.isfinite(a).all():
+        raise ValueError(f"{name} must be finite (no NaN or inf)")
+    return a
+
+
+def _sweep(sweep, minimum):
+    """1-D array of at least `minimum` finite distances."""
+    a = np.asarray(sweep, dtype=float)
+    if a.ndim != 1 or a.size < minimum or not np.isfinite(a).all():
+        raise ValueError(f"sweep must be a one-dimensional array of at least "
+                         f"{minimum} finite distances")
+    return a
+
+
+def _window(win):
+    """(wy, wx) from a scalar or a pair, with the original numeric types."""
+    if np.ndim(win) == 0:
+        wy = wx = win
+    elif np.ndim(win) == 1 and len(win) == 2:
+        wy, wx = win
+    else:
+        raise ValueError("win must be a scalar or a (wy, wx) pair")
+    _real_scalar(wy, "win")
+    _real_scalar(wx, "win")
+    return wy, wx
+
+
 def _pitch(dx):
-    """Return (dy, dx) from a scalar or a 2-tuple pitch."""
+    """Return (dy, dx) from a positive scalar or a 2-tuple pitch (metres)."""
     if np.ndim(dx) == 0:
-        return float(dx), float(dx)
-    dy, dxx = dx
-    return float(dy), float(dxx)
+        v = _positive(dx, "dx")
+        return v, v
+    if np.ndim(dx) != 1 or len(dx) != 2:
+        raise ValueError("dx must be a positive scalar or a (dy, dx) pair")
+    return _positive(dx[0], "dx[0] (dy)"), _positive(dx[1], "dx[1] (dx)")
 
 
 def _kz(shape, dx=DX, wl=WL):
     """Longitudinal wavenumber grid and propagating-wave mask (cached)."""
     if isinstance(shape, (int, np.integer)):
         shape = (int(shape), int(shape))
+    if len(shape) != 2 or min(shape) < 1:
+        raise ValueError(f"shape must be two positive sizes, got {tuple(shape)}")
     dy, dxx = _pitch(dx)
+    wl = _positive(wl, "wl")
     key = (tuple(shape), dy, dxx, float(wl))
     if key in _KZ_CACHE:
         _KZ_CACHE.move_to_end(key)
@@ -119,13 +209,12 @@ def angular_spectrum(field, z, dx=DX, wl=WL):
     """Propagate a complex 2-D field by distance z (negative = back).
 
     Rectangular fields are allowed (v0.1.3); dx may be a scalar or a
-    (dy, dx) pair. Raises ValueError on non-finite input or non-2-D input.
+    (dy, dx) pair, in metres. Raises ValueError for a field that is not a
+    non-empty finite 2-D array, for a non-finite z, and for a non-positive or
+    non-finite dx or wl; TypeError if z, dx or wl is not a real number.
     """
-    field = np.asarray(field, dtype=complex)
-    if field.ndim != 2:
-        raise ValueError("field must be a 2D array")
-    if not np.isfinite(field).all() or not np.isfinite(z):
-        raise ValueError("field and z must be finite")
+    field = _field2d(field, "field")
+    z = _real_scalar(z, "z")
     return np.fft.ifft2(np.fft.fft2(field) * _transfer(z, field.shape, dx, wl))
 
 
@@ -137,23 +226,34 @@ class Propagator:
     """
 
     def __init__(self, field0, dx=DX, wl=WL):
-        field0 = np.asarray(field0, dtype=complex)
-        if field0.ndim != 2 or not np.isfinite(field0).all():
-            raise ValueError("field0 must be a finite 2D array")
+        field0 = _field2d(field0, "field0")
         self.shape = field0.shape
         self.kz, mask = _kz(field0.shape, dx, wl)
         self.spec = np.fft.fft2(field0) * mask
         self.dx, self.wl = dx, wl
 
     def __call__(self, z):
-        if not np.isfinite(z):
-            raise ValueError("z must be finite")
+        z = _real_scalar(z, "z")
         return np.fft.ifft2(self.spec * np.exp(1j * z * self.kz))
 
 
 # ------------------------------------------------------------------ objects
 def make_object(n=N):
-    """Amplitude object: a ring, a cross, and three dots (one plane)."""
+    """Amplitude object: a ring, a cross, and three dots (one plane).
+
+    The geometry is fixed in pixels (cross arms 60 px, dots 70 px from the
+    centre with radius 10). Below n = 122 the cross does not fit and a
+    ValueError is raised; from 122 to 159 the outer dots are clipped by the
+    grid edge and a UserWarning says so.
+    """
+    if isinstance(n, (bool, np.bool_)) or not isinstance(n, (int, np.integer)):
+        raise TypeError(f"n must be an integer, got {type(n).__name__}")
+    if n < 122:
+        raise ValueError(f"n must be at least 122 for the cross to fit, got {n}")
+    if n < 160:
+        warnings.warn(f"make_object(n={n}): the dots at 70 px from the centre "
+                      f"are clipped by the grid edge (n >= 160 shows them whole)",
+                      UserWarning, stacklevel=2)
     y, x = np.mgrid[0:n, 0:n]
     cx = cy = n // 2
     r = np.hypot(x - cx, y - cy)
@@ -177,11 +277,19 @@ def record_hologram(sensor_field, car=CAR_DEFAULT, n=None, dx=DX,
     exp(-i ref_phase), which is exactly what breaks imag_energy and what
     realness is invariant to. dx is unused (kept for the v0.1.2 API).
     """
-    sensor_field = np.asarray(sensor_field, dtype=complex)
+    sensor_field = _field2d(sensor_field, "sensor_field")
     ny, nx = sensor_field.shape
-    n = nx if n is None else n
+    n = nx if n is None else _positive(n, "n")
+    _pitch(dx)                                   # validated, otherwise unused
+    car = _real_scalar(car, "car")
     if not (0 < car < n // 2):
         raise ValueError(f"carrier must satisfy 0 < car < {n // 2}")
+    carrier_y = _real_scalar(carrier_y, "carrier_y")
+    if abs(carrier_y) >= ny / 2:
+        raise ValueError(f"carrier_y must satisfy |carrier_y| < {ny / 2:g} "
+                         f"(Nyquist), got {carrier_y}")
+    ref_amp = _positive(ref_amp, "ref_amp")
+    ref_phase = _real_scalar(ref_phase, "ref_phase")
     y, x = np.mgrid[0:ny, 0:nx]
     ref = ref_amp * np.exp(1j * (2 * np.pi * (car * x / nx + carrier_y * y / ny)
                                  + ref_phase))
@@ -223,9 +331,13 @@ def estimate_carrier_2d(hologram, dc_radius=0.12, half="left", hint=None,
     by a local upsampled DFT (two passes: 0.05 bin, then 0.0025 bin),
     which locates the continuous spectral peak, not the nearest bin.
     """
-    h = np.asarray(hologram, dtype=float)
-    if h.ndim != 2:
-        raise ValueError("hologram must be a 2D array")
+    h = _image2d(hologram, "hologram")
+    dc_radius = _real_scalar(dc_radius, "dc_radius")
+    if dc_radius < 0:
+        raise ValueError(f"dc_radius must be non-negative, got {dc_radius}")
+    if hint is not None:
+        hint = _pair(hint, "hint")
+        hint_radius = _positive(hint_radius, "hint_radius")
     h = h - h.mean()
     ny, nx = h.shape
     cy, cx = ny // 2, nx // 2
@@ -298,15 +410,15 @@ def reconstruct_field(hologram, car=CAR_DEFAULT, win=WIN_DEFAULT, n=None,
     the measured spectrum stay zero instead of wrapping in from the other
     side (the v0.1.2 edge-window rule, kept).
     """
-    h = np.asarray(hologram, dtype=float)
+    h = _image2d(hologram, "hologram")
     ny, nx = h.shape
+    wy, wx = _window(win)
     if carrier is None:
         nn = nx if n is None else n
         if not (0 < car < nn) or not (0 <= np.max(win) < nn // 2):
             raise ValueError("need 0 < carrier < n and 0 <= window < n/2")
         carrier = (0.0, -float(car))
-    ky, kx = float(carrier[0]), float(carrier[1])
-    wy, wx = (win, win) if np.ndim(win) == 0 else win
+    ky, kx = _pair(carrier, "carrier")
     if wy < 0 or wx < 0 or wy >= ny // 2 or wx >= nx // 2:
         raise ValueError("window must satisfy 0 <= win < n/2")
     if ky == round(ky) and kx == round(kx):
@@ -343,8 +455,12 @@ def reconstruct_field(hologram, car=CAR_DEFAULT, win=WIN_DEFAULT, n=None,
 
 def cropped_pitch(shape, win, dx):
     """Pixel pitch (dy, dx) of a crop=True reconstruction."""
+    if np.ndim(shape) != 1 or len(shape) != 2 or min(shape) < 1:
+        raise ValueError(f"shape must be two positive sizes, got {shape}")
     ny, nx = shape
-    wy, wx = (win, win) if np.ndim(win) == 0 else win
+    wy, wx = _window(win)
+    if wy < 0 or wx < 0:
+        raise ValueError("win must be non-negative")
     dy0, dx0 = _pitch(dx)
     return dy0 * ny / (2 * wy + 2), dx0 * nx / (2 * wx + 2)
 
@@ -370,8 +486,14 @@ def remove_quadratic_phase(field, iters=3):
     after removal are in a shifted/scaled coordinate: compare them
     DIFFERENTIALLY (slopes), as the DHM study does.
     """
-    g = np.asarray(field, dtype=complex).copy()
+    g = _field2d(field, "field").copy()
     ny, nx = g.shape
+    if min(ny, nx) < 3:
+        raise ValueError(f"field must be at least 3 x 3, got {g.shape}")
+    iters = _real_scalar(iters, "iters")
+    if iters < 1 or iters != int(iters):
+        raise ValueError(f"iters must be a positive integer, got {iters:g}")
+    iters = int(iters)
     y, x = np.mgrid[0:ny, 0:nx]
     y = (y - ny / 2) / ny
     x = (x - nx / 2) / nx
@@ -571,6 +693,14 @@ def parabolic_min(sweep, metrics):
 
 def golden_min(fun, a, b, tol=1e-8, max_iter=200):
     """Golden-section minimisation of a unimodal function on [a, b]."""
+    a, b = _real_scalar(a, "a"), _real_scalar(b, "b")
+    if a > b:
+        raise ValueError(f"a must not exceed b, got a={a}, b={b}")
+    tol = _positive(tol, "tol")
+    max_iter = _positive(max_iter, "max_iter")
+    if max_iter != int(max_iter):
+        raise ValueError(f"max_iter must be an integer, got {max_iter:g}")
+    max_iter = int(max_iter)
     g = (np.sqrt(5) - 1) / 2
     c, d = b - g * (b - a), a + g * (b - a)
     fc, fd = fun(c), fun(d)
@@ -607,9 +737,7 @@ def focus_sweep(field0, sweep, metric=realness, dx=DX, wl=WL,
     (v0.1.2 used imag_energy; pass metric=imag_energy to reproduce it).
     keep_fields=False returns fields=None (saves memory on big arrays).
     """
-    sweep = np.asarray(sweep, dtype=float)
-    if sweep.size < 2 or not np.isfinite(sweep).all():
-        raise ValueError("sweep needs at least two finite distances")
+    sweep = _sweep(sweep, 2)
     fn = _metric(metric)
     prop = Propagator(field0, dx, wl)
     fields, vals = [], []
@@ -631,7 +759,8 @@ def find_focus(field0, sweep, metric=realness, dx=DX, wl=WL, refine=True,
     The refinement brackets the coarse argmin by its two neighbours, so
     it can never jump to another basin.
     """
-    sweep = np.asarray(sweep, dtype=float)
+    sweep = _sweep(sweep, 1)
+    tol = _positive(tol, "tol")
     # The pair-spectrum identity is the fast path for the default metric.
     # Other metrics retain the general propagator implementation.
     if metric == "realness" or metric is realness:
@@ -668,9 +797,17 @@ def local_focus_map(field0, sweep, tile=32, metric="realness", dx=DX, wl=WL,
     """
     if metric not in ("realness", "ac_realness"):
         raise ValueError("local_focus_map supports realness/ac_realness")
-    sweep = np.asarray(sweep, dtype=float)
+    sweep = _sweep(sweep, 1)
     prop = Propagator(field0, dx, wl)
     ny, nx = prop.shape
+    tile = _real_scalar(tile, "tile")
+    if tile < 1 or tile != int(tile) or tile > min(ny, nx):
+        raise ValueError(f"tile must be an integer between 1 and "
+                         f"{min(ny, nx)}, got {tile:g}")
+    tile = int(tile)
+    min_energy_frac = _real_scalar(min_energy_frac, "min_energy_frac")
+    if not 0 <= min_energy_frac <= 1:
+        raise ValueError(f"min_energy_frac must be in [0, 1], got {min_energy_frac:g}")
     ty, tx = ny // tile, nx // tile
     curves = np.empty((len(sweep), ty, tx))
     energy = np.empty((len(sweep), ty, tx))
@@ -695,7 +832,11 @@ def local_focus_map(field0, sweep, tile=32, metric="realness", dx=DX, wl=WL,
 
 def correlation(a, b):
     """Pearson correlation between two images."""
-    return float(np.corrcoef(np.asarray(a).ravel(), np.asarray(b).ravel())[0, 1])
+    a, b = np.asarray(a), np.asarray(b)
+    if a.shape != b.shape or a.size < 2:
+        raise ValueError(f"a and b must have the same shape and at least 2 "
+                         f"elements, got {a.shape} and {b.shape}")
+    return float(np.corrcoef(a.ravel(), b.ravel())[0, 1])
 
 
 # ------------------------------------------------------------------ outputs
@@ -793,8 +934,14 @@ def run(z_obj=Z_OBJ_DEFAULT, sweep_min=-10e-3, sweep_max=0.0, frames=101,
     estimate=True: the carrier is estimated from the hologram (sub-bin)
     rather than assumed; the true carrier `car` may be fractional.
     """
-    if z_obj <= 0:
-        raise ValueError("z_obj must be positive")
+    z_obj = _positive(z_obj, "z_obj")
+    sweep_min = _real_scalar(sweep_min, "sweep_min")
+    sweep_max = _real_scalar(sweep_max, "sweep_max")
+    frames = _real_scalar(frames, "frames")
+    if frames != int(frames):
+        raise ValueError(f"frames must be an integer, got {frames:g}")
+    frames = int(frames)
+    _positive(fps, "fps")
     if not (sweep_min < sweep_max) or frames < 2:
         raise ValueError("need sweep_min < sweep_max and frames >= 2")
     os.makedirs(outdir, exist_ok=True)
