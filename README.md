@@ -209,6 +209,8 @@ hardware, microscope or biology validation.
 - The MP4 stores rendered views, not the complex field.
 - This is OPTICAL holography (wavefronts), not associative holographic
   memory and not the LED fan display.
+- What the tests check against a reference, and what has no such check, is
+  listed in [docs/validation.md](docs/validation.md).
 
 ## Data credits
 - pyDHM fly-head hologram `real_data/fly-20x.bmp` (MIT),

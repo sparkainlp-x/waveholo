@@ -1,0 +1,6 @@
+# Inputs for requirements-ci.txt (pip install in the Playwright container job).
+# playwright is pinned to the version of the container image
+# (mcr.microsoft.com/playwright/python:v1.44.0-jammy), whose bundled browsers
+# only match that release.
+.[test]
+playwright==1.44.0

@@ -38,6 +38,31 @@ Fixes after an independent review. No change to the focus pipeline's results.
   version. Off by default. See the README.
 - `scripts/check_release_tag.py` and `tests/test_release_metadata.py`: the guard's
   check, and a test that `pyproject.toml`, `__version__` and `CITATION.cff` agree.
+- `tests/test_physics_validation.py` (20 tests): propagation and recording are
+  compared with closed-form results (plane wave, Gaussian beam width, Talbot
+  self-imaging, axial Fresnel intensity behind a circular aperture, lateral
+  shift and periodic wrap-around, tone Fourier coefficients, Nyquist aliasing),
+  with exact symmetries and with conservation laws. `docs/validation.md` lists
+  the measured agreement, the units and conventions, and what is not validated.
+- `tests/test_sideband_separation.py` (8 tests): the off-axis separation rule
+  `3B + 1 <= car <= n/2 - B - 1` for objects band-limited to B bins, and the
+  focus bias below it.
+- `tests/test_input_validation.py` (31 tests) and
+  `tests/test_reproducibility.py` (golden values with a tolerance, and a hash of
+  the rounded intensity).
+- `uv.lock`, and `requirements-ci.in` / `requirements-ci.txt` for the Pyodide job.
+
+### Changed
+- Input checks: `dx`, `wl`, `z`, sweeps, fields, holograms, carriers and other
+  numeric arguments raise `ValueError` or `TypeError` that names the argument
+  (before: `ZeroDivisionError` for a zero pitch or wavelength, and silent results
+  for negative or NaN values). `make_object(n)` raises for `n < 122` and warns
+  for `n < 160`. Valid input gives the same results as before.
+- CI: the matrix jobs run `uv sync --locked`, so a version change in
+  `pyproject.toml` needs `uv lock`. The Pyodide job installs
+  `requirements-ci.txt`, which pins Playwright to 1.44.0 to match the
+  container's browsers; before, it installed Playwright 1.64.1, the browser
+  test was skipped, and the job passed without running it.
 
 ## 0.1.4 (2026-10-25)
 

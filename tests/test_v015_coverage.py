@@ -104,7 +104,8 @@ class TestObjectAndRecording(unittest.TestCase):
         self.assertEqual(obj[c, c], 1.0)            # the cross centre
         self.assertEqual(obj[c + 20, c + 20], 0.0)  # empty between ring and cross
         self.assertEqual(obj[c + 70, c + 0], 1.0)   # dot at (0, +70)
-        small = W.make_object(128)
+        with self.assertWarns(UserWarning):          # dots are clipped below n = 160
+            small = W.make_object(128)
         self.assertEqual(small.shape, (128, 128))
 
     def test_hologram_is_real_nonnegative_with_known_mean(self):

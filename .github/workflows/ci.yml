@@ -23,7 +23,9 @@ jobs:
           enable-cache: true
           cache-suffix: py${{ matrix.python-version }}
       - run: uv python install ${{ matrix.python-version }}
-      - run: uv sync --all-extras --python ${{ matrix.python-version }}
+      # --locked: fail if uv.lock is out of date with pyproject.toml, so the test
+      # environment is the one pinned in uv.lock (see docs/validation.md).
+      - run: uv sync --locked --all-extras --python ${{ matrix.python-version }}
       - run: |
           uv run coverage run -m unittest discover -s tests -v
           uv run coverage report -m
@@ -43,5 +45,7 @@ jobs:
       image: mcr.microsoft.com/playwright/python:v1.44.0-jammy
     steps:
       - uses: actions/checkout@v4
-      - run: pip install --upgrade pip && pip install -e .[test]
+      # Pinned in requirements-ci.txt (generated from requirements-ci.in; playwright
+      # matches the image's browsers). Installs this package too.
+      - run: pip install -r requirements-ci.txt
       - run: python -m unittest tests/test_pyodide_browser.py -v
