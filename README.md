@@ -13,10 +13,12 @@ slope check, not an absolute-focus test.
 The name is WaveHolo; the Python module, package and Zenodo record are
 called `wave-hologram` / `wave_hologram`.
 
-The v0.1.5 development line adds a vectorized pair-spectrum solver for
-realness sweeps, a browser-only Pyodide/NetCDF research sandbox at
-[`docs/sandbox/`](docs/sandbox/), and a real-data benchmark harness at
-[`real_data/live_dhm_benchmark.py`](real_data/live_dhm_benchmark.py).
+The released v0.1.5 (Zenodo DOI 10.5281/zenodo.23653721) added a vectorized
+pair-spectrum solver for realness sweeps, a browser-only Pyodide/NetCDF
+research sandbox at [`docs/sandbox/`](docs/sandbox/), and a real-data benchmark
+harness at [`real_data/live_dhm_benchmark.py`](real_data/live_dhm_benchmark.py).
+Changes after the v0.1.5 tag are listed under "Unreleased" in the
+[CHANGELOG](CHANGELOG.md).
 
 ## Install
 

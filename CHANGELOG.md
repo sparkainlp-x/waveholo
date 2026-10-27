@@ -67,6 +67,19 @@ Fixes after an independent review. No change to the focus pipeline's results.
   container's browsers; before, it installed Playwright 1.64.1, the browser
   test was skipped, and the job passed without running it.
 
+## 0.1.5 (2026-10-26, UTC)
+
+Contents of the `v0.1.5` tag (commit 0e8cd25), taken from its file list. **No
+change to the focus pipeline's reported results is claimed here.**
+
+### Added
+- `pair_spectrum_realness` in `wave_hologram.py`: a vectorized pair-spectrum
+  solver for realness sweeps.
+- `docs/sandbox/index.html`: a browser-only Pyodide/NetCDF research sandbox,
+  with `tests/test_netcdf_upload.py` and `tests/test_pyodide_browser.py`.
+- `real_data/live_dhm_benchmark.py`: a real-data benchmark harness.
+- `.github/workflows/publish.yml` and a revised `ci.yml`; `requirements-dev.txt`.
+
 ## 0.1.4 (2026-10-25)
 
 Packaging, CI, examples and a game. **No change to the focus pipeline, the
