@@ -38,8 +38,8 @@ SOFTWARE.
 
 ## Cuenat et al. DHM dataset (CC-BY-4.0)
 
-- Source: Cuenat et al., "Fast Autofocusing using Tiny Networks for
-  Digital Holographic Microscopy" (arXiv:2203.07772), dataset Zenodo
+- Source: Cuenat et al., "Fast Autofocusing using Tiny Transformer Networks
+  for Digital Holographic Microscopy" (arXiv:2203.07772), dataset Zenodo
   record 6337535,
   https://doi.org/10.5281/zenodo.6337535, licensed CC-BY-4.0
   (https://creativecommons.org/licenses/by/4.0/).

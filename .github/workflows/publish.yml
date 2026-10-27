@@ -11,6 +11,27 @@ permissions:
   id-token: write
 
 jobs:
+  # Opt-in guard. Publishing to PyPI needs the repository variable PYPI_PUBLISH == 'true'
+  # and a vX.Y.Z tag equal to the pyproject.toml version. Off by default; see README.
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        env:
+          PYPI_PUBLISH: ${{ vars.PYPI_PUBLISH }}
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$PYPI_PUBLISH" != "true" ]; then
+            echo "::notice::PyPI publishing is off (repository variable PYPI_PUBLISH is not 'true')."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          python3 scripts/check_release_tag.py "$REF" pyproject.toml
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+
   test-gate:
     runs-on: ubuntu-latest
     steps:
@@ -23,7 +44,8 @@ jobs:
       - run: uv run python -m unittest discover -s tests -v
 
   pypi-publish:
-    needs: test-gate
+    needs: [guard, test-gate]
+    if: needs.guard.outputs.publish == 'true'
     runs-on: ubuntu-latest
     environment:
       name: pypi

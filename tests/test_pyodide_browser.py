@@ -37,9 +37,9 @@ class TestPyodideBrowserSandbox(unittest.TestCase):
             page.goto(f"http://127.0.0.1:{self.port}/index.html")
             page.wait_for_selector("#run-btn:not([disabled])", timeout=45000)
             page.click("#run-btn")
-            page.wait_for_function("document.getElementById('console-out').innerText.includes('WaveHolo Measured Focus Plane')", timeout=30000)
+            page.wait_for_function("document.getElementById('console-out').innerText.includes('Illustrative curve minimum')", timeout=30000)
             text = page.locator("#console-out").inner_text()
-            self.assertIn("WaveHolo Measured Focus Plane", text)
+            self.assertIn("Illustrative curve minimum", text)
             self.assertIn("-5.000 mm", text)
             browser.close()
 

@@ -231,3 +231,23 @@ The DHM data comes from
 https://zenodo.org/api/records/6337535/files/dataset.tar.gz/content. A
 byte-range download of the first ~2.2 GB, extracted, gives the classes
 used here.
+
+## Addendum (independent review, v0.1.4 line)
+
+Written after an independent re-run. The original sections above are unchanged.
+
+- **Uncertainty of the real-data slope.** The "± 1.3" in section 1 is the
+  standard error of a least-squares fit to 530 holograms treated as independent,
+  although they sit at only 6 distinct stage positions. Recomputed from
+  `real_data/dhm_v013/dhm_per_hologram.csv`: a fit to the 6 class means gives
+  realness −96.3 µm/µm, SE 1.74, 95% interval ±4.8 (t, 4 degrees of freedom);
+  amplitude_variance −84.7 (SE 5.25); ac_realness −109.4 (SE 2.66). M² = 100 lies
+  within the realness interval, and the three metrics bracket it.
+- **"100 photons per pixel" (section 3, S6)** is the *peak* of the hologram. The
+  mean is 17.4 photons per pixel for the demo scene. 12/12 has a Wilson 95% lower
+  bound of 76%; 30 peak photons gave 9/12.
+- **Bias range.** Section 5 gives −50 to +64 µm for sharp binary objects; the
+  README summary previously said "±50 µm".
+- **Prior art.** Dubois (2006, 2014), Langehanenberg (2008), Memmolo (2011, 2014),
+  Zhang (2017) and Tamamitsu (2020) are not benchmarked here; see the README
+  "Related work".
