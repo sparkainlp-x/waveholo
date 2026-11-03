@@ -1,0 +1,10 @@
+name: waveholo
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.9
+  - numpy>=1.24
+  - matplotlib>=3.8
+  - pip
+  - pip:
+      - -e .[test]

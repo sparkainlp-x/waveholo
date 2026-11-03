@@ -1,0 +1,9 @@
+{
+  "fixture_version": "1.0",
+  "data_type": "SYNTHETIC",
+  "scene": "point",
+  "resolution": 160,
+  "seed": 11,
+  "generation": "benchmarks/run_benchmark.py::_object",
+  "note": "Compact deterministic recipe; no large binary fixture is stored."
+}

@@ -1,0 +1,13 @@
+{
+  "protocol_version": "PROTOCOL-v1.0.0",
+  "resolutions": [160],
+  "carriers": [48],
+  "objects": ["point"],
+  "noise_sigmas": [0.0, 0.05],
+  "clip_negative_intensity": true,
+  "seeds": [11, 22],
+  "true_distance_m": 0.005,
+  "sweep_half_range_m": 0.001,
+  "sweep_points": 9,
+  "sideband_half_width_bins": 20
+}
