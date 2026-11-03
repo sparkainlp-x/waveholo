@@ -1,0 +1,14 @@
+{
+  "protocol_version": "PROTOCOL-v1.0.0",
+  "resolutions": [256, 512, 1024],
+  "carriers": ["low", "nominal", "high"],
+  "carrier_fractions": {"low": 0.24, "nominal": 0.30, "high": 0.36},
+  "objects": ["point", "extended", "textured"],
+  "noise_sigmas": [0.0, 0.01, 0.05, 0.2],
+  "clip_negative_intensity": true,
+  "seeds": [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010],
+  "true_distance_m": 0.005,
+  "sweep_half_range_m": 0.001,
+  "sweep_points": 21,
+  "sideband_half_width_bins": 32
+}

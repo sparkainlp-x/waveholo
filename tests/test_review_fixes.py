@@ -64,7 +64,7 @@ class TestWording(unittest.TestCase):
         self.assertIn("slope check, not an absolute-focus test", r)
         self.assertIn("−50 to +64 µm", r)
         self.assertNotIn("up to ±50 µm", r)
-        self.assertIn("## Related work", r)
+        self.assertIn("### Related work", r)
         self.assertIn("100 *peak* photons", r)
 
     def test_name_and_orcid_in_citation(self):

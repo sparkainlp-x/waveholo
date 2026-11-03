@@ -1,0 +1,23 @@
+name: Claim correction
+description: Report wording that exceeds or misstates the evidence
+title: "[CLAIM CORRECTION] "
+labels: ["scientific-integrity"]
+body:
+  - type: input
+    id: location
+    attributes:
+      label: Claim location
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: Exact claim and evidence category (SYNTHETIC/REPORTED/TARGET/UNRUN)
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: Suggested correction and supporting source
+    validations:
+      required: true

@@ -6,3 +6,7 @@ build/
 dist/
 .ipynb_checkpoints/
 examples/output/
+benchmark-output/
+/results/smoke/
+/results/run-a/
+/results/run-b/
