@@ -4,6 +4,14 @@
 
 Fixes after an independent review. No change to the focus pipeline's results.
 
+### Changed
+- `RESULTS_v0.1.3.md` section 1 no longer headlines the naive per-hologram
+  "-96.4 +/- 1.3" as a real-microscope result. It now states that the 530
+  holograms sit at 6 distinct stage positions (effective n about 6), gives the
+  6-class-mean interval (-96.3 +/- 4.8, 95%, recomputed from the committed CSV),
+  calls the check a slope check, and lists what it does not show. Wording only;
+  no numbers, code or results changed.
+
 ### Fixed
 - `pair_spectrum_realness` built one phase kernel for the whole sweep
   (`len(sweep) * ny * nx` complex numbers, about 1.6 GB for 101 frames of
